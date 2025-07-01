@@ -1,0 +1,8 @@
+name: order_uuid
+in: path
+description: UUID заказа
+required: true
+schema:
+  type: string
+  format: uuid
+  example: 9dffb115-2d48-49e6-8d5a-834844b5785b
