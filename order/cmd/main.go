@@ -48,6 +48,8 @@ type OrderHandler struct {
 	storage         *OrderStorage
 	inventoryClient inventoryV1.InventoryServiceClient
 	paymentClient   paymentV1.PaymentServiceClient
+	inventoryConn   *grpc.ClientConn
+	paymentConn     *grpc.ClientConn
 }
 
 func NewOrderHandler(storage *OrderStorage) *OrderHandler {
@@ -64,25 +66,27 @@ func NewOrderHandler(storage *OrderStorage) *OrderHandler {
 	inventoryClient := inventoryV1.NewInventoryServiceClient(inventoryConn)
 	paymentClient := paymentV1.NewPaymentServiceClient(paymentConn)
 
-	return &OrderHandler{
+	handler := &OrderHandler{
 		storage:         storage,
 		inventoryClient: inventoryClient,
 		paymentClient:   paymentClient,
 	}
+
+	// Store connections for cleanup
+	handler.inventoryConn = inventoryConn
+	handler.paymentConn = paymentConn
+
+	return handler
 }
 
 func (o OrderHandler) CreateNewOrder(ctx context.Context, req *orderV1.CreateOrderRequest) (orderV1.CreateNewOrderRes, error) {
-	// Генерируем order_uuid
 	orderUUID := uuid.New()
 
-	// Конвертируем UUID в строки для gRPC запроса
 	var partUUIDs []string
 	for _, partUUID := range req.PartUuids {
 		partUUIDs = append(partUUIDs, partUUID.String())
 	}
 
-	// Получаем детали через gRPC InventoryService.ListParts
-	// Создаем фильтр для получения всех запрошенных деталей
 	filter := &inventoryV1.PartsFilter{
 		Uuids: partUUIDs,
 	}
@@ -91,17 +95,15 @@ func (o OrderHandler) CreateNewOrder(ctx context.Context, req *orderV1.CreateOrd
 		Filter: filter,
 	}
 
-	// Вызываем InventoryService
 	inventoryResponse, err := o.inventoryClient.ListParts(ctx, listRequest)
 	if err != nil {
 		log.Printf("Error calling InventoryService: %v", err)
 		return &orderV1.InternalServerError{
 			Code:    500,
-			Message: "Failed to get parts from inventory service",
+			Message: "Internal error",
 		}, nil
 	}
 
-	// Проверяем, что все детали существуют
 	if len(inventoryResponse.Parts) != len(req.PartUuids) {
 		return &orderV1.BadRequestError{
 			Code:    400,
@@ -109,31 +111,27 @@ func (o OrderHandler) CreateNewOrder(ctx context.Context, req *orderV1.CreateOrd
 		}, nil
 	}
 
-	// Считаем total_price
 	var totalPrice float32
 	for _, part := range inventoryResponse.Parts {
 		totalPrice += float32(part.Price)
 	}
 
-	// Создаем заказ
 	order := &orderV1.OrderDto{
 		OrderUUID:       orderUUID,
 		UserUUID:        req.UserUUID,
 		PartUuids:       req.PartUuids,
 		TotalPrice:      totalPrice,
 		Status:          orderV1.OrderDtoStatusPENDINGPAYMENT,
-		TransactionUUID: uuid.Nil,                                          // Будет заполнено при оплате
-		PaymentMethod:   orderV1.OrderDtoPaymentMethodPAYMENTMETHODUNKNOWN, // Будет заполнено при оплате
+		TransactionUUID: uuid.Nil,                                              // Будет заполнено при оплате
+		PaymentMethod:   orderV1.OrderDtoPaymentMethodPAYMENTMETHODUNSPECIFIED, // Будет заполнено при оплате
 	}
 
-	// Сохраняем заказ в storage
 	o.storage.mu.Lock()
 	o.storage.orders[orderUUID.String()] = order
 	o.storage.mu.Unlock()
 
 	log.Printf("Created new order: %s with total price: %.2f", orderUUID.String(), totalPrice)
 
-	// Возвращаем CreateOrderResponse
 	return &orderV1.CreateOrderResponse{
 		OrderUUID:  orderUUID,
 		TotalPrice: totalPrice,
@@ -154,8 +152,11 @@ func (o OrderHandler) PayOrder(ctx context.Context, req *orderV1.PayOrderRequest
 
 	var paymentMethod paymentV1.PaymentMethod
 	switch req.PaymentMethod {
-	case orderV1.PayOrderRequestPaymentMethodPAYMENTMETHODUNKNOWN:
-		paymentMethod = paymentV1.PaymentMethod_PAYMENT_METHOD_UNKNOWN_UNSPECIFIED
+	case orderV1.PayOrderRequestPaymentMethodPAYMENTMETHODUNSPECIFIED:
+		return &orderV1.BadRequestError{
+			Code:    400,
+			Message: "Payment method must be specified",
+		}, nil
 	case orderV1.PayOrderRequestPaymentMethodPAYMENTMETHODCARD:
 		paymentMethod = paymentV1.PaymentMethod_PAYMENT_METHOD_CARD
 	case orderV1.PayOrderRequestPaymentMethodPAYMENTMETHODSBP:
@@ -166,8 +167,8 @@ func (o OrderHandler) PayOrder(ctx context.Context, req *orderV1.PayOrderRequest
 		paymentMethod = paymentV1.PaymentMethod_PAYMENT_METHOD_INVESTOR_MONEY
 	default:
 		return &orderV1.BadRequestError{
-			Code:    400,
-			Message: "Invalid payment method",
+			Code:    500,
+			Message: "Internal error",
 		}, nil
 	}
 
@@ -182,7 +183,7 @@ func (o OrderHandler) PayOrder(ctx context.Context, req *orderV1.PayOrderRequest
 		log.Printf("Error calling PaymentService: %v", err)
 		return &orderV1.InternalServerError{
 			Code:    500,
-			Message: "Failed to process payment",
+			Message: "Internal error",
 		}, nil
 	}
 
@@ -191,14 +192,14 @@ func (o OrderHandler) PayOrder(ctx context.Context, req *orderV1.PayOrderRequest
 		log.Printf("Error parsing transaction UUID: %v", err)
 		return &orderV1.InternalServerError{
 			Code:    500,
-			Message: "Invalid transaction UUID received from payment service",
+			Message: "Internal error",
 		}, nil
 	}
 
 	var orderPaymentMethod orderV1.OrderDtoPaymentMethod
 	switch req.PaymentMethod {
-	case orderV1.PayOrderRequestPaymentMethodPAYMENTMETHODUNKNOWN:
-		orderPaymentMethod = orderV1.OrderDtoPaymentMethodPAYMENTMETHODUNKNOWN
+	case orderV1.PayOrderRequestPaymentMethodPAYMENTMETHODUNSPECIFIED:
+		orderPaymentMethod = orderV1.OrderDtoPaymentMethodPAYMENTMETHODUNSPECIFIED
 	case orderV1.PayOrderRequestPaymentMethodPAYMENTMETHODCARD:
 		orderPaymentMethod = orderV1.OrderDtoPaymentMethodPAYMENTMETHODCARD
 	case orderV1.PayOrderRequestPaymentMethodPAYMENTMETHODSBP:
@@ -208,7 +209,7 @@ func (o OrderHandler) PayOrder(ctx context.Context, req *orderV1.PayOrderRequest
 	case orderV1.PayOrderRequestPaymentMethodPAYMENTMETHODINVESTORMONEY:
 		orderPaymentMethod = orderV1.OrderDtoPaymentMethodPAYMENTMETHODINVESTORMONEY
 	default:
-		orderPaymentMethod = orderV1.OrderDtoPaymentMethodPAYMENTMETHODUNKNOWN
+		orderPaymentMethod = orderV1.OrderDtoPaymentMethodPAYMENTMETHODUNSPECIFIED
 	}
 
 	o.storage.mu.Lock()
@@ -263,20 +264,15 @@ func (o OrderHandler) CancelOrderByUUID(ctx context.Context, params orderV1.Canc
 		o.storage.mu.Lock()
 		order.Status = orderV1.OrderDtoStatusCANCELLED
 		o.storage.mu.Unlock()
-
 		log.Printf("Order %s cancelled successfully", params.OrderUUID.String())
-
 		return &orderV1.CancelOrderByUUIDNoContent{}, nil
-
 	case orderV1.OrderDtoStatusPAID:
 		return &orderV1.Conflict{
 			Code:    409,
 			Message: "Order is already paid and cannot be cancelled",
 		}, nil
-
 	case orderV1.OrderDtoStatusCANCELLED:
 		return &orderV1.CancelOrderByUUIDNoContent{}, nil
-
 	default:
 		return &orderV1.BadRequestError{
 			Code:    400,
@@ -286,22 +282,38 @@ func (o OrderHandler) CancelOrderByUUID(ctx context.Context, params orderV1.Canc
 }
 
 func (o OrderHandler) NewError(ctx context.Context, err error) *orderV1.GenericErrorStatusCode {
+	log.Printf("Internal error: %v", err)
 	return &orderV1.GenericErrorStatusCode{
 		StatusCode: 500,
 		Response: orderV1.GenericError{
 			Code:    orderV1.NewOptInt(500),
-			Message: orderV1.NewOptString(err.Error()),
+			Message: orderV1.NewOptString("Internal error"),
 		},
+	}
+}
+
+func (o OrderHandler) Close() {
+	if o.inventoryConn != nil {
+		if err := o.inventoryConn.Close(); err != nil {
+			log.Printf("Error closing inventory connection: %v", err)
+		}
+	}
+	if o.paymentConn != nil {
+		if err := o.paymentConn.Close(); err != nil {
+			log.Printf("Error closing payment connection: %v", err)
+		}
 	}
 }
 
 func main() {
 	storage := NewOrderStorage()
-	OrderHandler := NewOrderHandler(storage)
-	orderServer, err := orderV1.NewServer(OrderHandler)
+	orderHandler := NewOrderHandler(storage)
+	orderServer, err := orderV1.NewServer(orderHandler)
 	if err != nil {
+		orderHandler.Close()
 		log.Fatalf("ошибка создания сервера OpenAPI: %v", err)
 	}
+	defer orderHandler.Close()
 
 	r := chi.NewRouter()
 
@@ -337,7 +349,7 @@ func main() {
 
 	err = server.Shutdown(ctx)
 	if err != nil {
-		log.Printf("❌ Ошибка при остановке сервера: %v\n", err)
+		log.Printf("❌ Ошибка при остановке сервера: %v", err)
 	}
 
 	log.Println("✅  Сервер остановлен")

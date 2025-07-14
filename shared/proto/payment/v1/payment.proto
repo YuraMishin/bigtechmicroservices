@@ -17,7 +17,7 @@ message PayOrderRequest {
 
 // PaymentMethod represents the available payment methods
 enum PaymentMethod {
-  PAYMENT_METHOD_UNKNOWN_UNSPECIFIED = 0;  // Неизвестный способ
+  PAYMENT_METHOD_UNSPECIFIED = 0;          // Неизвестный способ
   PAYMENT_METHOD_CARD = 1;                 // Банковская карта
   PAYMENT_METHOD_SBP = 2;                  // Система быстрых платежей
   PAYMENT_METHOD_CREDIT_CARD = 3;          // Кредитная карта

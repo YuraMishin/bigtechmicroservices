@@ -112,7 +112,7 @@ func (s *OrderDto) Validate() error {
 
 func (s OrderDtoPaymentMethod) Validate() error {
 	switch s {
-	case "PAYMENT_METHOD_UNKNOWN":
+	case "PAYMENT_METHOD_UNSPECIFIED":
 		return nil
 	case "PAYMENT_METHOD_CARD":
 		return nil
@@ -165,7 +165,7 @@ func (s *PayOrderRequest) Validate() error {
 
 func (s PayOrderRequestPaymentMethod) Validate() error {
 	switch s {
-	case "PAYMENT_METHOD_UNKNOWN":
+	case "PAYMENT_METHOD_UNSPECIFIED":
 		return nil
 	case "PAYMENT_METHOD_CARD":
 		return nil

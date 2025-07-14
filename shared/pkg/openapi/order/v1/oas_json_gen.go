@@ -1076,8 +1076,8 @@ func (s *OrderDtoPaymentMethod) Decode(d *jx.Decoder) error {
 	}
 	// Try to use constant string.
 	switch OrderDtoPaymentMethod(v) {
-	case OrderDtoPaymentMethodPAYMENTMETHODUNKNOWN:
-		*s = OrderDtoPaymentMethodPAYMENTMETHODUNKNOWN
+	case OrderDtoPaymentMethodPAYMENTMETHODUNSPECIFIED:
+		*s = OrderDtoPaymentMethodPAYMENTMETHODUNSPECIFIED
 	case OrderDtoPaymentMethodPAYMENTMETHODCARD:
 		*s = OrderDtoPaymentMethodPAYMENTMETHODCARD
 	case OrderDtoPaymentMethodPAYMENTMETHODSBP:
@@ -1258,8 +1258,8 @@ func (s *PayOrderRequestPaymentMethod) Decode(d *jx.Decoder) error {
 	}
 	// Try to use constant string.
 	switch PayOrderRequestPaymentMethod(v) {
-	case PayOrderRequestPaymentMethodPAYMENTMETHODUNKNOWN:
-		*s = PayOrderRequestPaymentMethodPAYMENTMETHODUNKNOWN
+	case PayOrderRequestPaymentMethodPAYMENTMETHODUNSPECIFIED:
+		*s = PayOrderRequestPaymentMethodPAYMENTMETHODUNSPECIFIED
 	case PayOrderRequestPaymentMethodPAYMENTMETHODCARD:
 		*s = PayOrderRequestPaymentMethodPAYMENTMETHODCARD
 	case PayOrderRequestPaymentMethodPAYMENTMETHODSBP:

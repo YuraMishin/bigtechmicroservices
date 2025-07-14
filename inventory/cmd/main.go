@@ -7,9 +7,11 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"slices"
 	"sync"
 	"syscall"
 
+	"github.com/brianvoe/gofakeit/v7"
 	"github.com/google/uuid"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -33,152 +35,116 @@ type inventoryService struct {
 func (s *inventoryService) initializeSampleData() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-
-	now := timestamppb.Now()
-
-	engineUUID := uuid.New().String()
-	fuelUUID := uuid.New().String()
-	wingUUID := uuid.New().String()
-	portholeUUID := uuid.New().String()
-
-	s.parts[engineUUID] = &inventoryV1.Part{
-		Uuid:          engineUUID,
-		Name:          "Main Engine",
-		Description:   "Primary propulsion engine for spacecraft",
-		Price:         50000.0,
-		StockQuantity: 5,
-		Category:      inventoryV1.Category_CATEGORY_ENGINE,
-		Dimensions: &inventoryV1.Dimensions{
-			Length: 2.5,
-			Width:  1.2,
-			Height: 1.8,
-			Weight: 1500.0,
-		},
-		Manufacturer: &inventoryV1.Manufacturer{
-			Name:    "SpaceTech Industries",
-			Country: "Germany",
-			Website: "https://spacetech.de",
-		},
-		Tags: []string{"propulsion", "main", "high-thrust"},
-		Metadata: map[string]*inventoryV1.Value{
-			"thrust": {
-				Kind: &inventoryV1.Value_DoubleValue{DoubleValue: 1000000.0},
-			},
-			"fuel_type": {
-				Kind: &inventoryV1.Value_StringValue{StringValue: "liquid_hydrogen"},
-			},
-		},
-		CreatedAt: now,
-		UpdatedAt: now,
+	if err := gofakeit.Seed(42); err != nil {
+		log.Printf("gofakeit.Seed error: %v", err)
 	}
-
-	s.parts[fuelUUID] = &inventoryV1.Part{
-		Uuid:          fuelUUID,
-		Name:          "Fuel Tank",
-		Description:   "Cryogenic fuel storage tank",
-		Price:         25000.0,
-		StockQuantity: 10,
-		Category:      inventoryV1.Category_CATEGORY_FUEL,
-		Dimensions: &inventoryV1.Dimensions{
-			Length: 3.0,
-			Width:  2.0,
-			Height: 2.0,
-			Weight: 800.0,
-		},
-		Manufacturer: &inventoryV1.Manufacturer{
-			Name:    "CryoSystems Ltd",
-			Country: "USA",
-			Website: "https://cryosystems.com",
-		},
-		Tags: []string{"storage", "cryogenic", "fuel"},
-		Metadata: map[string]*inventoryV1.Value{
-			"capacity": {
-				Kind: &inventoryV1.Value_DoubleValue{DoubleValue: 5000.0},
+	for i := 0; i < 10; i++ {
+		partUUID := uuid.New().String()
+		now := timestamppb.Now()
+		categories := []inventoryV1.Category{
+			inventoryV1.Category_CATEGORY_ENGINE,
+			inventoryV1.Category_CATEGORY_FUEL,
+			inventoryV1.Category_CATEGORY_WING,
+			inventoryV1.Category_CATEGORY_PORTHOLE,
+		}
+		category := categories[gofakeit.IntRange(0, len(categories)-1)]
+		countries := []string{"USA", "Germany", "France", "Japan", "UK", "Canada", "Italy", "Sweden"}
+		country := countries[gofakeit.IntRange(0, len(countries)-1)]
+		var tags []string
+		switch category {
+		case inventoryV1.Category_CATEGORY_ENGINE:
+			tags = []string{"propulsion", "thrust", "combustion", "high-performance", "main-engine"}
+		case inventoryV1.Category_CATEGORY_FUEL:
+			tags = []string{"storage", "cryogenic", "fuel", "tank", "pressurized"}
+		case inventoryV1.Category_CATEGORY_WING:
+			tags = []string{"aerodynamics", "lift", "control", "carbon-fiber", "wing"}
+		case inventoryV1.Category_CATEGORY_PORTHOLE:
+			tags = []string{"observation", "glass", "window", "reinforced", "transparent"}
+		}
+		gofakeit.ShuffleStrings(tags)
+		selectedTags := tags[:gofakeit.IntRange(2, min(4, len(tags)))]
+		metadata := make(map[string]*inventoryV1.Value)
+		switch category {
+		case inventoryV1.Category_CATEGORY_ENGINE:
+			metadata["thrust"] = &inventoryV1.Value{
+				Kind: &inventoryV1.Value_DoubleValue{DoubleValue: gofakeit.Float64Range(500000, 2000000)},
+			}
+			metadata["fuel_type"] = &inventoryV1.Value{
+				Kind: &inventoryV1.Value_StringValue{StringValue: gofakeit.RandomString([]string{"liquid_hydrogen", "kerosene", "methane", "solid_fuel"})},
+			}
+		case inventoryV1.Category_CATEGORY_FUEL:
+			metadata["capacity"] = &inventoryV1.Value{
+				Kind: &inventoryV1.Value_DoubleValue{DoubleValue: gofakeit.Float64Range(1000, 10000)},
+			}
+			metadata["temperature"] = &inventoryV1.Value{
+				Kind: &inventoryV1.Value_DoubleValue{DoubleValue: gofakeit.Float64Range(-260, -200)},
+			}
+		case inventoryV1.Category_CATEGORY_WING:
+			metadata["span"] = &inventoryV1.Value{
+				Kind: &inventoryV1.Value_DoubleValue{DoubleValue: gofakeit.Float64Range(10, 25)},
+			}
+			metadata["material"] = &inventoryV1.Value{
+				Kind: &inventoryV1.Value_StringValue{StringValue: gofakeit.RandomString([]string{"carbon_fiber", "titanium", "aluminum", "composite"})},
+			}
+		case inventoryV1.Category_CATEGORY_PORTHOLE:
+			metadata["thickness"] = &inventoryV1.Value{
+				Kind: &inventoryV1.Value_DoubleValue{DoubleValue: gofakeit.Float64Range(0.02, 0.1)},
+			}
+			metadata["transparency"] = &inventoryV1.Value{
+				Kind: &inventoryV1.Value_DoubleValue{DoubleValue: gofakeit.Float64Range(0.85, 0.98)},
+			}
+		}
+		var companyName string
+		switch country {
+		case "USA":
+			companyName = gofakeit.RandomString([]string{"SpaceTech USA", "AeroDynamics Inc", "RocketCorp", "Orbital Systems"})
+		case "Germany":
+			companyName = gofakeit.RandomString([]string{"Deutsche SpaceTech", "Bavarian Aerospace", "Berlin Dynamics", "Hamburg Systems"})
+		case "France":
+			companyName = gofakeit.RandomString([]string{"Aérospatiale France", "Paris Dynamics", "Lyon Aerospace", "Marseille Tech"})
+		case "Japan":
+			companyName = gofakeit.RandomString([]string{"Tokyo SpaceTech", "Osaka Aerospace", "Kyoto Dynamics", "Yokohama Systems"})
+		default:
+			companyName = gofakeit.Company() + " Aerospace"
+		}
+		s.parts[partUUID] = &inventoryV1.Part{
+			Uuid: partUUID,
+			Name: gofakeit.RandomString([]string{
+				"Main Engine", "Auxiliary Engine", "Thruster", "Propulsion Unit",
+				"Fuel Tank", "Cryogenic Tank", "Storage Container", "Fuel Cell",
+				"Main Wing", "Control Surface", "Aileron", "Flap Assembly",
+				"Observation Window", "Porthole", "Viewport", "Transparent Panel",
+			}) + " " + gofakeit.RandomString([]string{"Alpha", "Beta", "Gamma", "Delta", "Echo"}),
+			Description:   gofakeit.Sentence(10),
+			Price:         gofakeit.Float64Range(5000, 100000),
+			StockQuantity: int64(gofakeit.IntRange(1, 20)),
+			Category:      category,
+			Dimensions: &inventoryV1.Dimensions{
+				Length: gofakeit.Float64Range(0.5, 10.0),
+				Width:  gofakeit.Float64Range(0.3, 5.0),
+				Height: gofakeit.Float64Range(0.1, 3.0),
+				Weight: gofakeit.Float64Range(50, 2000),
 			},
-			"temperature": {
-				Kind: &inventoryV1.Value_DoubleValue{DoubleValue: -253.0},
+			Manufacturer: &inventoryV1.Manufacturer{
+				Name:    companyName,
+				Country: country,
+				Website: "https://" + gofakeit.DomainName(),
 			},
-		},
-		CreatedAt: now,
-		UpdatedAt: now,
-	}
-
-	s.parts[wingUUID] = &inventoryV1.Part{
-		Uuid:          wingUUID,
-		Name:          "Main Wing",
-		Description:   "Primary wing assembly for atmospheric flight",
-		Price:         35000.0,
-		StockQuantity: 3,
-		Category:      inventoryV1.Category_CATEGORY_WING,
-		Dimensions: &inventoryV1.Dimensions{
-			Length: 8.0,
-			Width:  2.5,
-			Height: 0.3,
-			Weight: 1200.0,
-		},
-		Manufacturer: &inventoryV1.Manufacturer{
-			Name:    "AeroDynamics Corp",
-			Country: "France",
-			Website: "https://aerodynamics.fr",
-		},
-		Tags: []string{"aerodynamics", "main", "wing"},
-		Metadata: map[string]*inventoryV1.Value{
-			"span": {
-				Kind: &inventoryV1.Value_DoubleValue{DoubleValue: 16.0},
-			},
-			"material": {
-				Kind: &inventoryV1.Value_StringValue{StringValue: "carbon_fiber"},
-			},
-		},
-		CreatedAt: now,
-		UpdatedAt: now,
-	}
-
-	s.parts[portholeUUID] = &inventoryV1.Part{
-		Uuid:          portholeUUID,
-		Name:          "Observation Porthole",
-		Description:   "Reinforced glass porthole for space observation",
-		Price:         15000.0,
-		StockQuantity: 8,
-		Category:      inventoryV1.Category_CATEGORY_PORTHOLE,
-		Dimensions: &inventoryV1.Dimensions{
-			Length: 0.8,
-			Width:  0.8,
-			Height: 0.1,
-			Weight: 50.0,
-		},
-		Manufacturer: &inventoryV1.Manufacturer{
-			Name:    "OptiGlass GmbH",
-			Country: "Germany",
-			Website: "https://optiglass.de",
-		},
-		Tags: []string{"observation", "glass", "window"},
-		Metadata: map[string]*inventoryV1.Value{
-			"thickness": {
-				Kind: &inventoryV1.Value_DoubleValue{DoubleValue: 0.05},
-			},
-			"transparency": {
-				Kind: &inventoryV1.Value_DoubleValue{DoubleValue: 0.95},
-			},
-		},
-		CreatedAt: now,
-		UpdatedAt: now,
-	}
-}
-
-//
-//nolint:unused
-func containsString(slice []string, item string) bool {
-	for _, s := range slice {
-		if s == item {
-			return true
+			Tags:      selectedTags,
+			Metadata:  metadata,
+			CreatedAt: now,
+			UpdatedAt: now,
 		}
 	}
-	return false
 }
 
-//
-//nolint:unused
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
 func containsCategory(slice []inventoryV1.Category, item inventoryV1.Category) bool {
 	for _, c := range slice {
 		if c == item {
@@ -192,14 +158,14 @@ func matchesUUIDFilter(part *inventoryV1.Part, uuids []string) bool {
 	if len(uuids) == 0 {
 		return true
 	}
-	return containsString(uuids, part.Uuid)
+	return slices.Contains(uuids, part.Uuid)
 }
 
 func matchesNameFilter(part *inventoryV1.Part, names []string) bool {
 	if len(names) == 0 {
 		return true
 	}
-	return containsString(names, part.Name)
+	return slices.Contains(names, part.Name)
 }
 
 func matchesCategoryFilter(part *inventoryV1.Part, categories []inventoryV1.Category) bool {
@@ -216,7 +182,7 @@ func matchesManufacturerCountryFilter(part *inventoryV1.Part, countries []string
 	if part.Manufacturer == nil {
 		return false
 	}
-	return containsString(countries, part.Manufacturer.Country)
+	return slices.Contains(countries, part.Manufacturer.Country)
 }
 
 func matchesTagsFilter(part *inventoryV1.Part, filterTags []string) bool {
@@ -225,7 +191,7 @@ func matchesTagsFilter(part *inventoryV1.Part, filterTags []string) bool {
 	}
 
 	for _, filterTag := range filterTags {
-		if containsString(part.Tags, filterTag) {
+		if slices.Contains(part.Tags, filterTag) {
 			return true
 		}
 	}
@@ -233,7 +199,6 @@ func matchesTagsFilter(part *inventoryV1.Part, filterTags []string) bool {
 }
 
 func (s *inventoryService) matchesFilter(part *inventoryV1.Part, filter *inventoryV1.PartsFilter) bool {
-	// If no filter is provided, return true
 	if filter == nil {
 		return true
 	}
@@ -249,8 +214,9 @@ func (s *inventoryService) GetPart(ctx context.Context, in *inventoryV1.GetPartR
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	if in.Uuid == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "UUID cannot be empty")
+	_, err := uuid.Parse(in.Uuid)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "Invalid UUID format: %v", err)
 	}
 
 	part, exists := s.parts[in.Uuid]
@@ -266,15 +232,12 @@ func (s *inventoryService) GetPart(ctx context.Context, in *inventoryV1.GetPartR
 func (s *inventoryService) ListParts(ctx context.Context, in *inventoryV1.ListPartsRequest) (*inventoryV1.ListPartsResponse, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-
 	var filteredParts []*inventoryV1.Part
-
 	for _, part := range s.parts {
 		if s.matchesFilter(part, in.GetFilter()) {
 			filteredParts = append(filteredParts, part)
 		}
 	}
-
 	return &inventoryV1.ListPartsResponse{
 		Parts: filteredParts,
 	}, nil
@@ -293,16 +256,12 @@ func main() {
 	}()
 
 	s := grpc.NewServer()
-
+	reflection.Register(s)
 	service := &inventoryService{
 		parts: make(map[string]*inventoryV1.Part),
 	}
-
 	service.initializeSampleData()
-
 	inventoryV1.RegisterInventoryServiceServer(s, service)
-
-	reflection.Register(s)
 
 	go func() {
 		log.Printf("🚀 gRPC server listening on %d\n", grpcPort)

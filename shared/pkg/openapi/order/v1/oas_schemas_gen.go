@@ -443,7 +443,7 @@ func (*OrderDto) getOrderByUUIDRes() {}
 type OrderDtoPaymentMethod string
 
 const (
-	OrderDtoPaymentMethodPAYMENTMETHODUNKNOWN       OrderDtoPaymentMethod = "PAYMENT_METHOD_UNKNOWN"
+	OrderDtoPaymentMethodPAYMENTMETHODUNSPECIFIED   OrderDtoPaymentMethod = "PAYMENT_METHOD_UNSPECIFIED"
 	OrderDtoPaymentMethodPAYMENTMETHODCARD          OrderDtoPaymentMethod = "PAYMENT_METHOD_CARD"
 	OrderDtoPaymentMethodPAYMENTMETHODSBP           OrderDtoPaymentMethod = "PAYMENT_METHOD_SBP"
 	OrderDtoPaymentMethodPAYMENTMETHODCREDITCARD    OrderDtoPaymentMethod = "PAYMENT_METHOD_CREDIT_CARD"
@@ -453,7 +453,7 @@ const (
 // AllValues returns all OrderDtoPaymentMethod values.
 func (OrderDtoPaymentMethod) AllValues() []OrderDtoPaymentMethod {
 	return []OrderDtoPaymentMethod{
-		OrderDtoPaymentMethodPAYMENTMETHODUNKNOWN,
+		OrderDtoPaymentMethodPAYMENTMETHODUNSPECIFIED,
 		OrderDtoPaymentMethodPAYMENTMETHODCARD,
 		OrderDtoPaymentMethodPAYMENTMETHODSBP,
 		OrderDtoPaymentMethodPAYMENTMETHODCREDITCARD,
@@ -464,7 +464,7 @@ func (OrderDtoPaymentMethod) AllValues() []OrderDtoPaymentMethod {
 // MarshalText implements encoding.TextMarshaler.
 func (s OrderDtoPaymentMethod) MarshalText() ([]byte, error) {
 	switch s {
-	case OrderDtoPaymentMethodPAYMENTMETHODUNKNOWN:
+	case OrderDtoPaymentMethodPAYMENTMETHODUNSPECIFIED:
 		return []byte(s), nil
 	case OrderDtoPaymentMethodPAYMENTMETHODCARD:
 		return []byte(s), nil
@@ -482,8 +482,8 @@ func (s OrderDtoPaymentMethod) MarshalText() ([]byte, error) {
 // UnmarshalText implements encoding.TextUnmarshaler.
 func (s *OrderDtoPaymentMethod) UnmarshalText(data []byte) error {
 	switch OrderDtoPaymentMethod(data) {
-	case OrderDtoPaymentMethodPAYMENTMETHODUNKNOWN:
-		*s = OrderDtoPaymentMethodPAYMENTMETHODUNKNOWN
+	case OrderDtoPaymentMethodPAYMENTMETHODUNSPECIFIED:
+		*s = OrderDtoPaymentMethodPAYMENTMETHODUNSPECIFIED
 		return nil
 	case OrderDtoPaymentMethodPAYMENTMETHODCARD:
 		*s = OrderDtoPaymentMethodPAYMENTMETHODCARD
@@ -571,7 +571,7 @@ func (s *PayOrderRequest) SetPaymentMethod(val PayOrderRequestPaymentMethod) {
 type PayOrderRequestPaymentMethod string
 
 const (
-	PayOrderRequestPaymentMethodPAYMENTMETHODUNKNOWN       PayOrderRequestPaymentMethod = "PAYMENT_METHOD_UNKNOWN"
+	PayOrderRequestPaymentMethodPAYMENTMETHODUNSPECIFIED   PayOrderRequestPaymentMethod = "PAYMENT_METHOD_UNSPECIFIED"
 	PayOrderRequestPaymentMethodPAYMENTMETHODCARD          PayOrderRequestPaymentMethod = "PAYMENT_METHOD_CARD"
 	PayOrderRequestPaymentMethodPAYMENTMETHODSBP           PayOrderRequestPaymentMethod = "PAYMENT_METHOD_SBP"
 	PayOrderRequestPaymentMethodPAYMENTMETHODCREDITCARD    PayOrderRequestPaymentMethod = "PAYMENT_METHOD_CREDIT_CARD"
@@ -581,7 +581,7 @@ const (
 // AllValues returns all PayOrderRequestPaymentMethod values.
 func (PayOrderRequestPaymentMethod) AllValues() []PayOrderRequestPaymentMethod {
 	return []PayOrderRequestPaymentMethod{
-		PayOrderRequestPaymentMethodPAYMENTMETHODUNKNOWN,
+		PayOrderRequestPaymentMethodPAYMENTMETHODUNSPECIFIED,
 		PayOrderRequestPaymentMethodPAYMENTMETHODCARD,
 		PayOrderRequestPaymentMethodPAYMENTMETHODSBP,
 		PayOrderRequestPaymentMethodPAYMENTMETHODCREDITCARD,
@@ -592,7 +592,7 @@ func (PayOrderRequestPaymentMethod) AllValues() []PayOrderRequestPaymentMethod {
 // MarshalText implements encoding.TextMarshaler.
 func (s PayOrderRequestPaymentMethod) MarshalText() ([]byte, error) {
 	switch s {
-	case PayOrderRequestPaymentMethodPAYMENTMETHODUNKNOWN:
+	case PayOrderRequestPaymentMethodPAYMENTMETHODUNSPECIFIED:
 		return []byte(s), nil
 	case PayOrderRequestPaymentMethodPAYMENTMETHODCARD:
 		return []byte(s), nil
@@ -610,8 +610,8 @@ func (s PayOrderRequestPaymentMethod) MarshalText() ([]byte, error) {
 // UnmarshalText implements encoding.TextUnmarshaler.
 func (s *PayOrderRequestPaymentMethod) UnmarshalText(data []byte) error {
 	switch PayOrderRequestPaymentMethod(data) {
-	case PayOrderRequestPaymentMethodPAYMENTMETHODUNKNOWN:
-		*s = PayOrderRequestPaymentMethodPAYMENTMETHODUNKNOWN
+	case PayOrderRequestPaymentMethodPAYMENTMETHODUNSPECIFIED:
+		*s = PayOrderRequestPaymentMethodPAYMENTMETHODUNSPECIFIED
 		return nil
 	case PayOrderRequestPaymentMethodPAYMENTMETHODCARD:
 		*s = PayOrderRequestPaymentMethodPAYMENTMETHODCARD

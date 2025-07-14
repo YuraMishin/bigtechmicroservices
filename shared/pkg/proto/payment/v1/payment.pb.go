@@ -25,28 +25,28 @@ const (
 type PaymentMethod int32
 
 const (
-	PaymentMethod_PAYMENT_METHOD_UNKNOWN_UNSPECIFIED PaymentMethod = 0 // Неизвестный способ
-	PaymentMethod_PAYMENT_METHOD_CARD                PaymentMethod = 1 // Банковская карта
-	PaymentMethod_PAYMENT_METHOD_SBP                 PaymentMethod = 2 // Система быстрых платежей
-	PaymentMethod_PAYMENT_METHOD_CREDIT_CARD         PaymentMethod = 3 // Кредитная карта
-	PaymentMethod_PAYMENT_METHOD_INVESTOR_MONEY      PaymentMethod = 4 // Деньги инвестора (внутренний метод)
+	PaymentMethod_PAYMENT_METHOD_UNSPECIFIED    PaymentMethod = 0 // Неизвестный способ
+	PaymentMethod_PAYMENT_METHOD_CARD           PaymentMethod = 1 // Банковская карта
+	PaymentMethod_PAYMENT_METHOD_SBP            PaymentMethod = 2 // Система быстрых платежей
+	PaymentMethod_PAYMENT_METHOD_CREDIT_CARD    PaymentMethod = 3 // Кредитная карта
+	PaymentMethod_PAYMENT_METHOD_INVESTOR_MONEY PaymentMethod = 4 // Деньги инвестора (внутренний метод)
 )
 
 // Enum value maps for PaymentMethod.
 var (
 	PaymentMethod_name = map[int32]string{
-		0: "PAYMENT_METHOD_UNKNOWN_UNSPECIFIED",
+		0: "PAYMENT_METHOD_UNSPECIFIED",
 		1: "PAYMENT_METHOD_CARD",
 		2: "PAYMENT_METHOD_SBP",
 		3: "PAYMENT_METHOD_CREDIT_CARD",
 		4: "PAYMENT_METHOD_INVESTOR_MONEY",
 	}
 	PaymentMethod_value = map[string]int32{
-		"PAYMENT_METHOD_UNKNOWN_UNSPECIFIED": 0,
-		"PAYMENT_METHOD_CARD":                1,
-		"PAYMENT_METHOD_SBP":                 2,
-		"PAYMENT_METHOD_CREDIT_CARD":         3,
-		"PAYMENT_METHOD_INVESTOR_MONEY":      4,
+		"PAYMENT_METHOD_UNSPECIFIED":    0,
+		"PAYMENT_METHOD_CARD":           1,
+		"PAYMENT_METHOD_SBP":            2,
+		"PAYMENT_METHOD_CREDIT_CARD":    3,
+		"PAYMENT_METHOD_INVESTOR_MONEY": 4,
 	}
 )
 
@@ -135,7 +135,7 @@ func (x *PayOrderRequest) GetPaymentMethod() PaymentMethod {
 	if x != nil {
 		return x.PaymentMethod
 	}
-	return PaymentMethod_PAYMENT_METHOD_UNKNOWN_UNSPECIFIED
+	return PaymentMethod_PAYMENT_METHOD_UNSPECIFIED
 }
 
 // PayOrderResponse represents the response after payment processing
@@ -195,9 +195,9 @@ const file_payment_v1_payment_proto_rawDesc = "" +
 	"\tuser_uuid\x18\x02 \x01(\tR\buserUuid\x12@\n" +
 	"\x0epayment_method\x18\x03 \x01(\x0e2\x19.payment.v1.PaymentMethodR\rpaymentMethod\"=\n" +
 	"\x10PayOrderResponse\x12)\n" +
-	"\x10transaction_uuid\x18\x01 \x01(\tR\x0ftransactionUuid*\xab\x01\n" +
-	"\rPaymentMethod\x12&\n" +
-	"\"PAYMENT_METHOD_UNKNOWN_UNSPECIFIED\x10\x00\x12\x17\n" +
+	"\x10transaction_uuid\x18\x01 \x01(\tR\x0ftransactionUuid*\xa3\x01\n" +
+	"\rPaymentMethod\x12\x1e\n" +
+	"\x1aPAYMENT_METHOD_UNSPECIFIED\x10\x00\x12\x17\n" +
 	"\x13PAYMENT_METHOD_CARD\x10\x01\x12\x16\n" +
 	"\x12PAYMENT_METHOD_SBP\x10\x02\x12\x1e\n" +
 	"\x1aPAYMENT_METHOD_CREDIT_CARD\x10\x03\x12!\n" +
