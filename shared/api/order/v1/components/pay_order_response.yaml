@@ -1,0 +1,9 @@
+type: object
+required:
+  - transaction_uuid
+properties:
+  transaction_uuid:
+    type: string
+    format: uuid
+    description: Уникальный идентификатор транзакции на оплату
+    example: 9dffb115-2d48-49e6-8d5a-834844b5785b
