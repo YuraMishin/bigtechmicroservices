@@ -1,0 +1,33 @@
+with-expecter: true
+#boilerplate-file: ".mockery_boilerplate_text.txt"
+dir: "{{.InterfaceDir}}/mocks"
+filename: "mock_{{.InterfaceNameSnake}}.go"
+outpkg: "mocks"
+mockname: "{{.InterfaceName}}"
+resolve-type-alias: False
+issue-845-fix: True
+
+packages:
+  github.com/YuraMishin/bigtechmicroservices/inventory/internal/service:
+    config:
+      include-regex: ".*Service"
+
+  github.com/YuraMishin/bigtechmicroservices/inventory/internal/repository:
+    config:
+      include-regex: ".*Repository"
+
+  github.com/YuraMishin/bigtechmicroservices/order/internal/client/grpc:
+    config:
+      include-regex: ".*Client"
+
+  github.com/YuraMishin/bigtechmicroservices/order/internal/service:
+    config:
+      include-regex: ".*Service"
+
+  github.com/YuraMishin/bigtechmicroservices/order/internal/repository:
+    config:
+      include-regex: ".*Repository"
+
+  github.com/YuraMishin/bigtechmicroservices/payment/internal/service:
+    config:
+      include-regex: ".*Service"
