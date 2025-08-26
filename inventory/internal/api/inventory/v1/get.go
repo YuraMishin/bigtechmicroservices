@@ -13,14 +13,18 @@ import (
 )
 
 func (a *api) GetPart(ctx context.Context, req *inventoryV1.GetPartRequest) (*inventoryV1.GetPartResponse, error) {
-	part, err := a.inventoryService.GetPart(ctx, req.GetUuid())
+	uuid := req.GetUuid()
+	part, err := a.inventoryService.GetPart(ctx, uuid)
 	if err != nil {
-		if errors.Is(err, model.ErrPartNotFound) {
-			return nil, status.Errorf(codes.NotFound, "part with UUID %s not found", req.GetUuid())
+		if errors.Is(err, model.ErrInvalidRequest) {
+			return nil, status.Errorf(codes.InvalidArgument, "invalid request")
 		}
-		return nil, err
+		if errors.Is(err, model.ErrPartNotFound) {
+			return nil, status.Errorf(codes.NotFound, "part with UUID %s not found", uuid)
+		}
+		return nil, status.Errorf(codes.Internal, "internal error")
 	}
 	return &inventoryV1.GetPartResponse{
-		Part: converter.PartToProto(part),
+		Part: converter.ToProtoPart(part),
 	}, nil
 }

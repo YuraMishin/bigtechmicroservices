@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/brianvoe/gofakeit/v7"
+	gc "github.com/enetx/g/cmp"
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -17,7 +18,7 @@ func initializeSampleData() map[string]repoModel.Part {
 	if err := gofakeit.Seed(42); err != nil {
 		log.Printf("gofakeit.Seed error: %v", err)
 	}
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		partUUID := uuid.New().String()
 		now := timestamppb.Now()
 		categories := []inventoryV1.Category{
@@ -41,7 +42,7 @@ func initializeSampleData() map[string]repoModel.Part {
 			tags = []string{"observation", "glass", "window", "reinforced", "transparent"}
 		}
 		gofakeit.ShuffleStrings(tags)
-		selectedTags := tags[:gofakeit.IntRange(2, min(4, len(tags)))]
+		selectedTags := tags[:gofakeit.IntRange(2, gc.Min(4, len(tags)))]
 		metadata := make(map[string]*inventoryV1.Value)
 		switch category {
 		case inventoryV1.Category_CATEGORY_ENGINE:
@@ -117,11 +118,4 @@ func initializeSampleData() map[string]repoModel.Part {
 		data[partUUID] = repoConverter.PartFromProto(protoPart)
 	}
 	return data
-}
-
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
 }

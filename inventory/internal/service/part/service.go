@@ -12,6 +12,9 @@ type service struct {
 }
 
 func NewService(inventoryRepository repository.PartRepository) *service {
+	if inventoryRepository == nil {
+		panic("inventoryRepository is nil")
+	}
 	return &service{
 		inventoryRepository: inventoryRepository,
 	}

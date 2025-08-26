@@ -321,7 +321,7 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 							case "POST":
 								r.name = CancelOrderByUUIDOperation
 								r.summary = "Отменить заказ по UUID"
-								r.operationID = "CancelOrderByUUID"
+								r.operationID = "CancelOrder"
 								r.pathPattern = "/api/v1/orders/{order_uuid}/cancel"
 								r.args = args
 								r.count = 1

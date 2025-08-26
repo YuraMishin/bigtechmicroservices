@@ -8,23 +8,19 @@ import (
 	orderV1 "github.com/YuraMishin/bigtechmicroservices/shared/pkg/openapi/order/v1"
 )
 
-func (a *api) CancelOrderByUUID(ctx context.Context, params orderV1.CancelOrderByUUIDParams) (orderV1.CancelOrderByUUIDRes, error) {
-	if params.OrderUUID == uuid.Nil {
+func (a *api) CancelOrder(ctx context.Context, params orderV1.CancelOrderByUUIDParams) (orderV1.CancelOrderByUUIDRes, error) {
+	if _, err := uuid.Parse(params.OrderUUID.String()); err != nil || params.OrderUUID == uuid.Nil {
 		return &orderV1.BadRequestError{
 			Code:    400,
 			Message: "Invalid order UUID",
 		}, nil
 	}
-	order, err := a.orderService.GetOrderByUUID(ctx, params.OrderUUID)
+	res, err := a.orderService.CancelOrder(ctx, params.OrderUUID)
 	if err != nil {
-		return &orderV1.NotFoundError{
-			Code:    404,
-			Message: "Order not found",
+		return &orderV1.InternalServerError{
+			Code:    500,
+			Message: "Internal error",
 		}, nil
 	}
-	uuidNoContent, err := a.orderService.CancelOrderByUUID(ctx, order)
-	if err != nil {
-		return nil, err
-	}
-	return uuidNoContent, nil
+	return res, nil
 }

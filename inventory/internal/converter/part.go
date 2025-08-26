@@ -8,7 +8,7 @@ import (
 	partV1 "github.com/YuraMishin/bigtechmicroservices/shared/pkg/proto/inventory/v1"
 )
 
-func PartToProto(part model.Part) *partV1.Part {
+func ToProtoPart(part model.Part) *partV1.Part {
 	var dimensions *partV1.Dimensions
 	if part.Dimensions != nil {
 		dimensions = &partV1.Dimensions{
@@ -57,17 +57,25 @@ func PartToProto(part model.Part) *partV1.Part {
 	}
 }
 
-func PartsFilterToRepo(partsFilter model.PartsFilter) repoModel.PartsFilter {
+func ToProtoPartList(parts []model.Part) []*partV1.Part {
+	protoParts := make([]*partV1.Part, len(parts))
+	for idx, part := range parts {
+		protoParts[idx] = ToProtoPart(part)
+	}
+	return protoParts
+}
+
+func ToRepoPartsFilter(partsFilter model.PartsFilter) repoModel.PartsFilter {
 	return repoModel.PartsFilter{
 		UUIDs:                 partsFilter.UUIDs,
 		Names:                 partsFilter.Names,
-		Categories:            CategoriesToRepo(partsFilter.Categories),
+		Categories:            ToRepoCategories(partsFilter.Categories),
 		ManufacturerCountries: partsFilter.ManufacturerCountries,
 		Tags:                  partsFilter.Tags,
 	}
 }
 
-func CategoriesToRepo(categories []model.Category) []repoModel.Category {
+func ToRepoCategories(categories []model.Category) []repoModel.Category {
 	repoCategories := make([]repoModel.Category, len(categories))
 	for i, category := range categories {
 		repoCategories[i] = repoModel.Category(category)
@@ -75,7 +83,7 @@ func CategoriesToRepo(categories []model.Category) []repoModel.Category {
 	return repoCategories
 }
 
-func PartsFilterToModel(partsFilter *partV1.PartsFilter) model.PartsFilter {
+func ToModelPartsFilter(partsFilter *partV1.PartsFilter) model.PartsFilter {
 	if partsFilter == nil {
 		return model.PartsFilter{}
 	}

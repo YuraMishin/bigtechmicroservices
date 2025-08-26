@@ -8,11 +8,11 @@ import (
 )
 
 func PartListToModel(parts []*inventoryV1.Part) []model.Part {
-	res := make([]model.Part, 0, len(parts))
+	partsModel := make([]model.Part, 0, len(parts))
 	for _, part := range parts {
-		res = append(res, PartToModel(part))
+		partsModel = append(partsModel, PartToModel(part))
 	}
-	return res
+	return partsModel
 }
 
 func PartToModel(part *inventoryV1.Part) model.Part {
@@ -21,13 +21,11 @@ func PartToModel(part *inventoryV1.Part) model.Part {
 		dims := DimensionsToModel(part.Dimensions)
 		dimensions = &dims
 	}
-
 	var manufacturer *model.Manufacturer
 	if part.Manufacturer != nil {
 		man := ManufacturerToModel(part.Manufacturer)
 		manufacturer = &man
 	}
-
 	metadata := make(map[string]*model.Value)
 	for k, v := range part.Metadata {
 		if v == nil || v.Kind == nil {
@@ -46,7 +44,6 @@ func PartToModel(part *inventoryV1.Part) model.Part {
 		}
 		metadata[k] = value
 	}
-
 	return model.Part{
 		UUID:          part.Uuid,
 		Name:          part.Name,
@@ -81,27 +78,25 @@ func ManufacturerToModel(manufacturer *inventoryV1.Manufacturer) model.Manufactu
 }
 
 func PartMetadataToModel(metadata map[string]*inventoryV1.Value) map[string]any {
-	res := make(map[string]any, len(metadata))
-
+	partsMetadataModel := make(map[string]any, len(metadata))
 	for key, value := range metadata {
 		if value == nil || value.Kind == nil {
 			continue
 		}
 		switch v := value.Kind.(type) {
 		case *inventoryV1.Value_StringValue:
-			res[key] = v.StringValue
+			partsMetadataModel[key] = v.StringValue
 		case *inventoryV1.Value_Int64Value:
-			res[key] = v.Int64Value
+			partsMetadataModel[key] = v.Int64Value
 		case *inventoryV1.Value_DoubleValue:
-			res[key] = v.DoubleValue
+			partsMetadataModel[key] = v.DoubleValue
 		case *inventoryV1.Value_BoolValue:
-			res[key] = v.BoolValue
+			partsMetadataModel[key] = v.BoolValue
 		default:
 			log.Printf("⚠️ unknown metadata kind for key %q: %T", key, v)
 		}
 	}
-
-	return res
+	return partsMetadataModel
 }
 
 func PartsFilterToProto(filter model.PartsFilter) *inventoryV1.PartsFilter {
@@ -109,7 +104,6 @@ func PartsFilterToProto(filter model.PartsFilter) *inventoryV1.PartsFilter {
 	for _, category := range filter.Categories {
 		categories = append(categories, inventoryV1.Category(category))
 	}
-
 	return &inventoryV1.PartsFilter{
 		Uuids:                 filter.UUIDs,
 		Names:                 filter.Names,

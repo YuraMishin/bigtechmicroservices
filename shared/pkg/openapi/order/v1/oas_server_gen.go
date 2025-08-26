@@ -13,7 +13,7 @@ type Handler interface {
 	// Отменить заказ по UUID.
 	//
 	// POST /api/v1/orders/{order_uuid}/cancel
-	CancelOrderByUUID(ctx context.Context, params CancelOrderByUUIDParams) (CancelOrderByUUIDRes, error)
+	CancelOrder(ctx context.Context, params CancelOrderByUUIDParams) (CancelOrderByUUIDRes, error)
 	// CreateNewOrder implements CreateNewOrder operation.
 	//
 	// Создаёт новый заказ на основе выбранных

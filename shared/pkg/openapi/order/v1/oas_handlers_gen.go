@@ -30,7 +30,7 @@ func (c *codeRecorder) WriteHeader(status int) {
 	c.ResponseWriter.WriteHeader(status)
 }
 
-// handleCancelOrderByUUIDRequest handles CancelOrderByUUID operation.
+// handleCancelOrderByUUIDRequest handles CancelOrder operation.
 //
 // Отменить заказ по UUID.
 //
@@ -39,7 +39,7 @@ func (s *Server) handleCancelOrderByUUIDRequest(args [1]string, argsEscaped bool
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
-		otelogen.OperationID("CancelOrderByUUID"),
+		otelogen.OperationID("CancelOrder"),
 		semconv.HTTPRequestMethodKey.String("POST"),
 		semconv.HTTPRouteKey.String("/api/v1/orders/{order_uuid}/cancel"),
 	}
@@ -101,7 +101,7 @@ func (s *Server) handleCancelOrderByUUIDRequest(args [1]string, argsEscaped bool
 		err          error
 		opErrContext = ogenerrors.OperationContext{
 			Name: CancelOrderByUUIDOperation,
-			ID:   "CancelOrderByUUID",
+			ID:   "CancelOrder",
 		}
 	)
 	params, err := decodeCancelOrderByUUIDParams(args, argsEscaped, r)
@@ -121,7 +121,7 @@ func (s *Server) handleCancelOrderByUUIDRequest(args [1]string, argsEscaped bool
 			Context:          ctx,
 			OperationName:    CancelOrderByUUIDOperation,
 			OperationSummary: "Отменить заказ по UUID",
-			OperationID:      "CancelOrderByUUID",
+			OperationID:      "CancelOrder",
 			Body:             nil,
 			Params: middleware.Parameters{
 				{
@@ -146,12 +146,12 @@ func (s *Server) handleCancelOrderByUUIDRequest(args [1]string, argsEscaped bool
 			mreq,
 			unpackCancelOrderByUUIDParams,
 			func(ctx context.Context, request Request, params Params) (response Response, err error) {
-				response, err = s.h.CancelOrderByUUID(ctx, params)
+				response, err = s.h.CancelOrder(ctx, params)
 				return response, err
 			},
 		)
 	} else {
-		response, err = s.h.CancelOrderByUUID(ctx, params)
+		response, err = s.h.CancelOrder(ctx, params)
 	}
 	if err != nil {
 		if errRes, ok := errors.Into[*GenericErrorStatusCode](err); ok {

@@ -46,7 +46,7 @@ func (*BadRequestError) createNewOrderRes()    {}
 func (*BadRequestError) getOrderByUUIDRes()    {}
 func (*BadRequestError) payOrderRes()          {}
 
-// CancelOrderByUUIDNoContent is response for CancelOrderByUUID operation.
+// CancelOrderByUUIDNoContent is response for CancelOrder operation.
 type CancelOrderByUUIDNoContent struct{}
 
 func (*CancelOrderByUUIDNoContent) cancelOrderByUUIDRes() {}

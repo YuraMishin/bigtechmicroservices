@@ -33,7 +33,7 @@ type Invoker interface {
 	// Отменить заказ по UUID.
 	//
 	// POST /api/v1/orders/{order_uuid}/cancel
-	CancelOrderByUUID(ctx context.Context, params CancelOrderByUUIDParams) (CancelOrderByUUIDRes, error)
+	CancelOrder(ctx context.Context, params CancelOrderByUUIDParams) (CancelOrderByUUIDRes, error)
 	// CreateNewOrder invokes CreateNewOrder operation.
 	//
 	// Создаёт новый заказ на основе выбранных
@@ -107,14 +107,14 @@ func (c *Client) requestURL(ctx context.Context) *url.URL {
 // Отменить заказ по UUID.
 //
 // POST /api/v1/orders/{order_uuid}/cancel
-func (c *Client) CancelOrderByUUID(ctx context.Context, params CancelOrderByUUIDParams) (CancelOrderByUUIDRes, error) {
+func (c *Client) CancelOrder(ctx context.Context, params CancelOrderByUUIDParams) (CancelOrderByUUIDRes, error) {
 	res, err := c.sendCancelOrderByUUID(ctx, params)
 	return res, err
 }
 
 func (c *Client) sendCancelOrderByUUID(ctx context.Context, params CancelOrderByUUIDParams) (res CancelOrderByUUIDRes, err error) {
 	otelAttrs := []attribute.KeyValue{
-		otelogen.OperationID("CancelOrderByUUID"),
+		otelogen.OperationID("CancelOrder"),
 		semconv.HTTPRequestMethodKey.String("POST"),
 		semconv.HTTPRouteKey.String("/api/v1/orders/{order_uuid}/cancel"),
 	}

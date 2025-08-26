@@ -9,12 +9,15 @@ import (
 	repoModel "github.com/YuraMishin/bigtechmicroservices/inventory/internal/repository/model"
 )
 
-func (r *repository) ListParts(_ context.Context, filter repoModel.PartsFilter) ([]serviceModel.Part, error) {
+func (r *repository) ListParts(_ context.Context, filter serviceModel.PartsFilter) ([]serviceModel.Part, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
+
+	repoFilter := repoConverter.ToRepoPartsFilter(filter)
+
 	var filteredParts []repoModel.Part
 	for _, part := range r.data {
-		if r.matchesFilter(part, filter) {
+		if r.matchesFilter(part, repoFilter) {
 			filteredParts = append(filteredParts, part)
 		}
 	}

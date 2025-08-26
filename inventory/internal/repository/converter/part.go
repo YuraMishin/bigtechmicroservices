@@ -101,3 +101,17 @@ func PartFromProto(part *inventoryV1.Part) repoModel.Part {
 		UpdatedAt:     part.UpdatedAt.Seconds,
 	}
 }
+
+func ToRepoPartsFilter(filter model.PartsFilter) repoModel.PartsFilter {
+	categories := make([]repoModel.Category, len(filter.Categories))
+	for i, c := range filter.Categories {
+		categories[i] = repoModel.Category(c)
+	}
+	return repoModel.PartsFilter{
+		UUIDs:                 filter.UUIDs,
+		Names:                 filter.Names,
+		Categories:            categories,
+		ManufacturerCountries: filter.ManufacturerCountries,
+		Tags:                  filter.Tags,
+	}
+}

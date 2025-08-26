@@ -15,3 +15,8 @@ type Order struct {
 	PaymentMethod   orderV1.OrderDtoPaymentMethod
 	Status          orderV1.OrderDtoStatus
 }
+
+type NewOrder struct {
+	UserUUID  uuid.UUID
+	PartUUIDs []uuid.UUID
+}

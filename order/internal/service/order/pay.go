@@ -3,10 +3,20 @@ package order
 import (
 	"context"
 
+	"github.com/google/uuid"
+
 	"github.com/YuraMishin/bigtechmicroservices/order/internal/model"
 	orderV1 "github.com/YuraMishin/bigtechmicroservices/shared/pkg/openapi/order/v1"
 	paymentV1 "github.com/YuraMishin/bigtechmicroservices/shared/pkg/proto/payment/v1"
 )
+
+func (s *service) PayOrderByUUID(ctx context.Context, orderUUID uuid.UUID, req *orderV1.PayOrderRequest) (orderV1.PayOrderRes, error) {
+	order, err := s.orderRepository.GetOrderByUUID(ctx, orderUUID)
+	if err != nil {
+		return &orderV1.NotFoundError{Code: 404, Message: "Order not found"}, nil
+	}
+	return s.PayOrder(ctx, order, req)
+}
 
 func (s *service) PayOrder(ctx context.Context, order model.Order, req *orderV1.PayOrderRequest) (orderV1.PayOrderRes, error) {
 	var paymentMethod paymentV1.PaymentMethod

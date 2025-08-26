@@ -31,7 +31,7 @@ func (_m *OrderService) CancelOrderByUUID(ctx context.Context, order model.Order
 	ret := _m.Called(ctx, order)
 
 	if len(ret) == 0 {
-		panic("no return value specified for CancelOrderByUUID")
+		panic("no return value specified for CancelOrder")
 	}
 
 	var r0 order_v1.CancelOrderByUUIDRes
@@ -56,7 +56,7 @@ func (_m *OrderService) CancelOrderByUUID(ctx context.Context, order model.Order
 	return r0, r1
 }
 
-// OrderService_CancelOrderByUUID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CancelOrderByUUID'
+// OrderService_CancelOrderByUUID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CancelOrder'
 type OrderService_CancelOrderByUUID_Call struct {
 	*mock.Call
 }
@@ -65,7 +65,7 @@ type OrderService_CancelOrderByUUID_Call struct {
 //   - ctx context.Context
 //   - order model.Order
 func (_e *OrderService_Expecter) CancelOrderByUUID(ctx interface{}, order interface{}) *OrderService_CancelOrderByUUID_Call {
-	return &OrderService_CancelOrderByUUID_Call{Call: _e.mock.On("CancelOrderByUUID", ctx, order)}
+	return &OrderService_CancelOrderByUUID_Call{Call: _e.mock.On("CancelOrder", ctx, order)}
 }
 
 func (_c *OrderService_CancelOrderByUUID_Call) Run(run func(ctx context.Context, order model.Order)) *OrderService_CancelOrderByUUID_Call {

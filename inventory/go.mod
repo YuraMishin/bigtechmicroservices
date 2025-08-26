@@ -1,20 +1,26 @@
 module github.com/YuraMishin/bigtechmicroservices/inventory
 
-go 1.24.4
+go 1.25
 
 replace github.com/YuraMishin/bigtechmicroservices/shared => ../shared
 
 require (
 	github.com/YuraMishin/bigtechmicroservices/shared v0.0.0-00010101000000-000000000000
 	github.com/brianvoe/gofakeit/v7 v7.3.0
+	github.com/enetx/g v1.0.186
 	github.com/google/uuid v1.6.0
+	github.com/stretchr/testify v1.11.0
 	google.golang.org/grpc v1.73.0
 	google.golang.org/protobuf v1.36.6
 )
 
 require (
+	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/stretchr/objx v0.5.2 // indirect
 	golang.org/x/net v0.40.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
-	golang.org/x/text v0.26.0 // indirect
+	golang.org/x/text v0.28.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250603155806-513f23925822 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

@@ -42,12 +42,13 @@ func (c *client) PayOrder(ctx context.Context, orderUUID, userUUID, paymentMetho
 	}
 	log.Printf("Payment client: gRPC returned transaction UUID: %s", response.TransactionUuid)
 
-	transactionUUID, err := uuid.Parse(response.TransactionUuid)
-	if err != nil {
-		return nil, err
+	// Конвертация в тип OpenAPI-модели (uuid.UUID). Ошибки парсинга не прокидываем из клиента.
+	var txUUID uuid.UUID
+	if parsed, err := uuid.Parse(response.TransactionUuid); err == nil {
+		txUUID = parsed
 	}
 
 	return &orderV1.PayOrderResponse{
-		TransactionUUID: transactionUUID,
+		TransactionUUID: txUUID,
 	}, nil
 }

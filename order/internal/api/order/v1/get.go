@@ -10,19 +10,19 @@ import (
 )
 
 func (a *api) GetOrderByUUID(ctx context.Context, params orderV1.GetOrderByUUIDParams) (orderV1.GetOrderByUUIDRes, error) {
-	if params.OrderUUID == uuid.Nil {
+	orderUUID := params.OrderUUID
+	if _, err := uuid.Parse(orderUUID.String()); err != nil || orderUUID == uuid.Nil {
 		return &orderV1.BadRequestError{
 			Code:    400,
 			Message: "Invalid order UUID",
 		}, nil
 	}
-	order, err := a.orderService.GetOrderByUUID(ctx, params.OrderUUID)
+	order, err := a.orderService.GetOrderByUUID(ctx, orderUUID)
 	if err != nil {
 		return &orderV1.NotFoundError{
 			Code:    404,
 			Message: "Order not found",
 		}, nil
 	}
-	orderDto := converter.OrderModelToOrderDto(order)
-	return orderDto, nil
+	return converter.OrderModelToOrderDto(order), nil
 }

@@ -16,7 +16,7 @@ import (
 	"github.com/ogen-go/ogen/validate"
 )
 
-// CancelOrderByUUIDParams is parameters of CancelOrderByUUID operation.
+// CancelOrderByUUIDParams is parameters of CancelOrder operation.
 type CancelOrderByUUIDParams struct {
 	// UUID заказа.
 	OrderUUID uuid.UUID

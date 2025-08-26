@@ -11,6 +11,9 @@ type api struct {
 }
 
 func NewAPI(inventoryService service.PartService) *api {
+	if inventoryService == nil {
+		panic("internal error")
+	}
 	return &api{
 		inventoryService: inventoryService,
 	}
