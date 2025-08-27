@@ -16,13 +16,13 @@ import (
 	"github.com/ogen-go/ogen/validate"
 )
 
-// CancelOrderByUUIDParams is parameters of CancelOrderByUUID operation.
-type CancelOrderByUUIDParams struct {
+// CancelOrderParams is parameters of CancelOrder operation.
+type CancelOrderParams struct {
 	// UUID заказа.
 	OrderUUID uuid.UUID
 }
 
-func unpackCancelOrderByUUIDParams(packed middleware.Parameters) (params CancelOrderByUUIDParams) {
+func unpackCancelOrderParams(packed middleware.Parameters) (params CancelOrderParams) {
 	{
 		key := middleware.ParameterKey{
 			Name: "order_uuid",
@@ -33,7 +33,7 @@ func unpackCancelOrderByUUIDParams(packed middleware.Parameters) (params CancelO
 	return params
 }
 
-func decodeCancelOrderByUUIDParams(args [1]string, argsEscaped bool, r *http.Request) (params CancelOrderByUUIDParams, _ error) {
+func decodeCancelOrderParams(args [1]string, argsEscaped bool, r *http.Request) (params CancelOrderParams, _ error) {
 	// Decode path: order_uuid.
 	if err := func() error {
 		param := args[0]
@@ -82,13 +82,13 @@ func decodeCancelOrderByUUIDParams(args [1]string, argsEscaped bool, r *http.Req
 	return params, nil
 }
 
-// GetOrderByUUIDParams is parameters of GetOrderByUUID operation.
-type GetOrderByUUIDParams struct {
+// GetOrderParams is parameters of GetOrder operation.
+type GetOrderParams struct {
 	// UUID заказа.
 	OrderUUID uuid.UUID
 }
 
-func unpackGetOrderByUUIDParams(packed middleware.Parameters) (params GetOrderByUUIDParams) {
+func unpackGetOrderParams(packed middleware.Parameters) (params GetOrderParams) {
 	{
 		key := middleware.ParameterKey{
 			Name: "order_uuid",
@@ -99,7 +99,7 @@ func unpackGetOrderByUUIDParams(packed middleware.Parameters) (params GetOrderBy
 	return params
 }
 
-func decodeGetOrderByUUIDParams(args [1]string, argsEscaped bool, r *http.Request) (params GetOrderByUUIDParams, _ error) {
+func decodeGetOrderParams(args [1]string, argsEscaped bool, r *http.Request) (params GetOrderParams, _ error) {
 	// Decode path: order_uuid.
 	if err := func() error {
 		param := args[0]

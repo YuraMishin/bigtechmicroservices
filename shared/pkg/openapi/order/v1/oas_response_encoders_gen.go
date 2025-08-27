@@ -13,9 +13,9 @@ import (
 	ht "github.com/ogen-go/ogen/http"
 )
 
-func encodeCancelOrderByUUIDResponse(response CancelOrderByUUIDRes, w http.ResponseWriter, span trace.Span) error {
+func encodeCancelOrderResponse(response CancelOrderRes, w http.ResponseWriter, span trace.Span) error {
 	switch response := response.(type) {
-	case *CancelOrderByUUIDNoContent:
+	case *CancelOrderNoContent:
 		w.WriteHeader(204)
 		span.SetStatus(codes.Ok, http.StatusText(204))
 
@@ -78,7 +78,7 @@ func encodeCancelOrderByUUIDResponse(response CancelOrderByUUIDRes, w http.Respo
 	}
 }
 
-func encodeCreateNewOrderResponse(response CreateNewOrderRes, w http.ResponseWriter, span trace.Span) error {
+func encodeCreateOrderResponse(response CreateOrderRes, w http.ResponseWriter, span trace.Span) error {
 	switch response := response.(type) {
 	case *CreateOrderResponse:
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -124,7 +124,7 @@ func encodeCreateNewOrderResponse(response CreateNewOrderRes, w http.ResponseWri
 	}
 }
 
-func encodeGetOrderByUUIDResponse(response GetOrderByUUIDRes, w http.ResponseWriter, span trace.Span) error {
+func encodeGetOrderResponse(response GetOrderRes, w http.ResponseWriter, span trace.Span) error {
 	switch response := response.(type) {
 	case *OrderDto:
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")

@@ -13,31 +13,31 @@ type UnimplementedHandler struct{}
 
 var _ Handler = UnimplementedHandler{}
 
-// CancelOrderByUUID implements CancelOrderByUUID operation.
+// CancelOrder implements CancelOrder operation.
 //
 // Отменить заказ по UUID.
 //
 // POST /api/v1/orders/{order_uuid}/cancel
-func (UnimplementedHandler) CancelOrderByUUID(ctx context.Context, params CancelOrderByUUIDParams) (r CancelOrderByUUIDRes, _ error) {
+func (UnimplementedHandler) CancelOrder(ctx context.Context, params CancelOrderParams) (r CancelOrderRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
-// CreateNewOrder implements CreateNewOrder operation.
+// CreateOrder implements CreateOrder operation.
 //
 // Создаёт новый заказ на основе выбранных
 // пользователем деталей.
 //
 // POST /api/v1/orders
-func (UnimplementedHandler) CreateNewOrder(ctx context.Context, req *CreateOrderRequest) (r CreateNewOrderRes, _ error) {
+func (UnimplementedHandler) CreateOrder(ctx context.Context, req *CreateOrderRequest) (r CreateOrderRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
-// GetOrderByUUID implements GetOrderByUUID operation.
+// GetOrder implements GetOrder operation.
 //
 // Получить заказ по UUID.
 //
 // GET /api/v1/orders/{order_uuid}
-func (UnimplementedHandler) GetOrderByUUID(ctx context.Context, params GetOrderByUUIDParams) (r GetOrderByUUIDRes, _ error) {
+func (UnimplementedHandler) GetOrder(ctx context.Context, params GetOrderParams) (r GetOrderRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 

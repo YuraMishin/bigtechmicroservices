@@ -60,7 +60,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			if len(elem) == 0 {
 				switch r.Method {
 				case "POST":
-					s.handleCreateNewOrderRequest([0]string{}, elemIsEscaped, w, r)
+					s.handleCreateOrderRequest([0]string{}, elemIsEscaped, w, r)
 				default:
 					s.notAllowed(w, r, "POST")
 				}
@@ -88,7 +88,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				if len(elem) == 0 {
 					switch r.Method {
 					case "GET":
-						s.handleGetOrderByUUIDRequest([1]string{
+						s.handleGetOrderRequest([1]string{
 							args[0],
 						}, elemIsEscaped, w, r)
 					default:
@@ -122,7 +122,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 							// Leaf node.
 							switch r.Method {
 							case "POST":
-								s.handleCancelOrderByUUIDRequest([1]string{
+								s.handleCancelOrderRequest([1]string{
 									args[0],
 								}, elemIsEscaped, w, r)
 							default:
@@ -251,9 +251,9 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 			if len(elem) == 0 {
 				switch method {
 				case "POST":
-					r.name = CreateNewOrderOperation
+					r.name = CreateOrderOperation
 					r.summary = "Создаёт новый заказ на основе выбранных пользователем деталей"
-					r.operationID = "CreateNewOrder"
+					r.operationID = "CreateOrder"
 					r.pathPattern = "/api/v1/orders"
 					r.args = args
 					r.count = 0
@@ -283,9 +283,9 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 				if len(elem) == 0 {
 					switch method {
 					case "GET":
-						r.name = GetOrderByUUIDOperation
+						r.name = GetOrderOperation
 						r.summary = "Получить заказ по UUID"
-						r.operationID = "GetOrderByUUID"
+						r.operationID = "GetOrder"
 						r.pathPattern = "/api/v1/orders/{order_uuid}"
 						r.args = args
 						r.count = 1
@@ -319,9 +319,9 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 							// Leaf node.
 							switch method {
 							case "POST":
-								r.name = CancelOrderByUUIDOperation
+								r.name = CancelOrderOperation
 								r.summary = "Отменить заказ по UUID"
-								r.operationID = "CancelOrderByUUID"
+								r.operationID = "CancelOrder"
 								r.pathPattern = "/api/v1/orders/{order_uuid}/cancel"
 								r.args = args
 								r.count = 1

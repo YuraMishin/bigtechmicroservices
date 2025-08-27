@@ -1,7 +1,6 @@
 type: object
 required:
   - user_uuid
-  - part_uuids
 properties:
   user_uuid:
     type: string
@@ -9,10 +8,37 @@ properties:
     description: UUID пользователя
     example: 9dffb115-2d48-49e6-8d5a-834844b5785b
   part_uuids:
-   type: array
-   items:
-     type: string
-     format: uuid
-     example:
+    type: array
+    description: Явный список UUID деталей. Взаимоисключимо с parts_filter
+    items:
+      type: string
+      format: uuid
+    example:
       - 9dffb115-2d48-49e6-8d5a-834844b5785a
       - 9dffb115-2d48-49e6-8d5a-834844b5785b
+  parts_filter:
+    description: Фильтр для выбора деталей. Взаимоисключимо с part_uuids
+    type: object
+    properties:
+      uuids:
+        type: array
+        items:
+          type: string
+          format: uuid
+      names:
+        type: array
+        items:
+          type: string
+      categories:
+        type: array
+        items:
+          type: integer
+          format: int32
+      manufacturer_countries:
+        type: array
+        items:
+          type: string
+      tags:
+        type: array
+        items:
+          type: string

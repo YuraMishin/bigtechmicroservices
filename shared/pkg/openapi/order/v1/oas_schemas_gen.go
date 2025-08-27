@@ -41,15 +41,15 @@ func (s *BadRequestError) SetMessage(val string) {
 	s.Message = val
 }
 
-func (*BadRequestError) cancelOrderByUUIDRes() {}
-func (*BadRequestError) createNewOrderRes()    {}
-func (*BadRequestError) getOrderByUUIDRes()    {}
-func (*BadRequestError) payOrderRes()          {}
+func (*BadRequestError) cancelOrderRes() {}
+func (*BadRequestError) createOrderRes() {}
+func (*BadRequestError) getOrderRes()    {}
+func (*BadRequestError) payOrderRes()    {}
 
-// CancelOrderByUUIDNoContent is response for CancelOrderByUUID operation.
-type CancelOrderByUUIDNoContent struct{}
+// CancelOrderNoContent is response for CancelOrder operation.
+type CancelOrderNoContent struct{}
 
-func (*CancelOrderByUUIDNoContent) cancelOrderByUUIDRes() {}
+func (*CancelOrderNoContent) cancelOrderRes() {}
 
 // Ref: #/components/schemas/conflict
 type Conflict struct {
@@ -79,13 +79,16 @@ func (s *Conflict) SetMessage(val string) {
 	s.Message = val
 }
 
-func (*Conflict) cancelOrderByUUIDRes() {}
+func (*Conflict) cancelOrderRes() {}
 
 // Ref: #/components/schemas/create_order_request
 type CreateOrderRequest struct {
 	// UUID пользователя.
-	UserUUID  uuid.UUID   `json:"user_uuid"`
+	UserUUID uuid.UUID `json:"user_uuid"`
+	// Явный список UUID деталей. Взаимоисключимо с parts_filter.
 	PartUuids []uuid.UUID `json:"part_uuids"`
+	// Фильтр для выбора деталей. Взаимоисключимо с part_uuids.
+	PartsFilter OptCreateOrderRequestPartsFilter `json:"parts_filter"`
 }
 
 // GetUserUUID returns the value of UserUUID.
@@ -98,6 +101,11 @@ func (s *CreateOrderRequest) GetPartUuids() []uuid.UUID {
 	return s.PartUuids
 }
 
+// GetPartsFilter returns the value of PartsFilter.
+func (s *CreateOrderRequest) GetPartsFilter() OptCreateOrderRequestPartsFilter {
+	return s.PartsFilter
+}
+
 // SetUserUUID sets the value of UserUUID.
 func (s *CreateOrderRequest) SetUserUUID(val uuid.UUID) {
 	s.UserUUID = val
@@ -106,6 +114,70 @@ func (s *CreateOrderRequest) SetUserUUID(val uuid.UUID) {
 // SetPartUuids sets the value of PartUuids.
 func (s *CreateOrderRequest) SetPartUuids(val []uuid.UUID) {
 	s.PartUuids = val
+}
+
+// SetPartsFilter sets the value of PartsFilter.
+func (s *CreateOrderRequest) SetPartsFilter(val OptCreateOrderRequestPartsFilter) {
+	s.PartsFilter = val
+}
+
+// Фильтр для выбора деталей. Взаимоисключимо с part_uuids.
+type CreateOrderRequestPartsFilter struct {
+	Uuids                 []uuid.UUID `json:"uuids"`
+	Names                 []string    `json:"names"`
+	Categories            []int32     `json:"categories"`
+	ManufacturerCountries []string    `json:"manufacturer_countries"`
+	Tags                  []string    `json:"tags"`
+}
+
+// GetUuids returns the value of Uuids.
+func (s *CreateOrderRequestPartsFilter) GetUuids() []uuid.UUID {
+	return s.Uuids
+}
+
+// GetNames returns the value of Names.
+func (s *CreateOrderRequestPartsFilter) GetNames() []string {
+	return s.Names
+}
+
+// GetCategories returns the value of Categories.
+func (s *CreateOrderRequestPartsFilter) GetCategories() []int32 {
+	return s.Categories
+}
+
+// GetManufacturerCountries returns the value of ManufacturerCountries.
+func (s *CreateOrderRequestPartsFilter) GetManufacturerCountries() []string {
+	return s.ManufacturerCountries
+}
+
+// GetTags returns the value of Tags.
+func (s *CreateOrderRequestPartsFilter) GetTags() []string {
+	return s.Tags
+}
+
+// SetUuids sets the value of Uuids.
+func (s *CreateOrderRequestPartsFilter) SetUuids(val []uuid.UUID) {
+	s.Uuids = val
+}
+
+// SetNames sets the value of Names.
+func (s *CreateOrderRequestPartsFilter) SetNames(val []string) {
+	s.Names = val
+}
+
+// SetCategories sets the value of Categories.
+func (s *CreateOrderRequestPartsFilter) SetCategories(val []int32) {
+	s.Categories = val
+}
+
+// SetManufacturerCountries sets the value of ManufacturerCountries.
+func (s *CreateOrderRequestPartsFilter) SetManufacturerCountries(val []string) {
+	s.ManufacturerCountries = val
+}
+
+// SetTags sets the value of Tags.
+func (s *CreateOrderRequestPartsFilter) SetTags(val []string) {
+	s.Tags = val
 }
 
 // Ref: #/components/schemas/create_order_response
@@ -136,7 +208,7 @@ func (s *CreateOrderResponse) SetTotalPrice(val float32) {
 	s.TotalPrice = val
 }
 
-func (*CreateOrderResponse) createNewOrderRes() {}
+func (*CreateOrderResponse) createOrderRes() {}
 
 // Ref: #/components/schemas/generic_error
 type GenericError struct {
@@ -220,10 +292,10 @@ func (s *InternalServerError) SetMessage(val string) {
 	s.Message = val
 }
 
-func (*InternalServerError) cancelOrderByUUIDRes() {}
-func (*InternalServerError) createNewOrderRes()    {}
-func (*InternalServerError) getOrderByUUIDRes()    {}
-func (*InternalServerError) payOrderRes()          {}
+func (*InternalServerError) cancelOrderRes() {}
+func (*InternalServerError) createOrderRes() {}
+func (*InternalServerError) getOrderRes()    {}
+func (*InternalServerError) payOrderRes()    {}
 
 // Ref: #/components/schemas/not_found_error
 type NotFoundError struct {
@@ -253,9 +325,55 @@ func (s *NotFoundError) SetMessage(val string) {
 	s.Message = val
 }
 
-func (*NotFoundError) cancelOrderByUUIDRes() {}
-func (*NotFoundError) getOrderByUUIDRes()    {}
-func (*NotFoundError) payOrderRes()          {}
+func (*NotFoundError) cancelOrderRes() {}
+func (*NotFoundError) getOrderRes()    {}
+func (*NotFoundError) payOrderRes()    {}
+
+// NewOptCreateOrderRequestPartsFilter returns new OptCreateOrderRequestPartsFilter with value set to v.
+func NewOptCreateOrderRequestPartsFilter(v CreateOrderRequestPartsFilter) OptCreateOrderRequestPartsFilter {
+	return OptCreateOrderRequestPartsFilter{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptCreateOrderRequestPartsFilter is optional CreateOrderRequestPartsFilter.
+type OptCreateOrderRequestPartsFilter struct {
+	Value CreateOrderRequestPartsFilter
+	Set   bool
+}
+
+// IsSet returns true if OptCreateOrderRequestPartsFilter was set.
+func (o OptCreateOrderRequestPartsFilter) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptCreateOrderRequestPartsFilter) Reset() {
+	var v CreateOrderRequestPartsFilter
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptCreateOrderRequestPartsFilter) SetTo(v CreateOrderRequestPartsFilter) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptCreateOrderRequestPartsFilter) Get() (v CreateOrderRequestPartsFilter, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptCreateOrderRequestPartsFilter) Or(d CreateOrderRequestPartsFilter) CreateOrderRequestPartsFilter {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
 
 // NewOptInt returns new OptInt with value set to v.
 func NewOptInt(v int) OptInt {
@@ -437,7 +555,7 @@ func (s *OrderDto) SetStatus(val OrderDtoStatus) {
 	s.Status = val
 }
 
-func (*OrderDto) getOrderByUUIDRes() {}
+func (*OrderDto) getOrderRes() {}
 
 // Способ оплаты.
 type OrderDtoPaymentMethod string

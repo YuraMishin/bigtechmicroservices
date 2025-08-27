@@ -14,11 +14,11 @@ import (
 	"github.com/ogen-go/ogen/validate"
 )
 
-func decodeCancelOrderByUUIDResponse(resp *http.Response) (res CancelOrderByUUIDRes, _ error) {
+func decodeCancelOrderResponse(resp *http.Response) (res CancelOrderRes, _ error) {
 	switch resp.StatusCode {
 	case 204:
 		// Code 204.
-		return &CancelOrderByUUIDNoContent{}, nil
+		return &CancelOrderNoContent{}, nil
 	case 400:
 		// Code 400.
 		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
@@ -205,7 +205,7 @@ func decodeCancelOrderByUUIDResponse(resp *http.Response) (res CancelOrderByUUID
 	return res, errors.Wrap(defRes, "error")
 }
 
-func decodeCreateNewOrderResponse(resp *http.Response) (res CreateNewOrderRes, _ error) {
+func decodeCreateOrderResponse(resp *http.Response) (res CreateOrderRes, _ error) {
 	switch resp.StatusCode {
 	case 200:
 		// Code 200.
@@ -367,7 +367,7 @@ func decodeCreateNewOrderResponse(resp *http.Response) (res CreateNewOrderRes, _
 	return res, errors.Wrap(defRes, "error")
 }
 
-func decodeGetOrderByUUIDResponse(resp *http.Response) (res GetOrderByUUIDRes, _ error) {
+func decodeGetOrderResponse(resp *http.Response) (res GetOrderRes, _ error) {
 	switch resp.StatusCode {
 	case 200:
 		// Code 200.
