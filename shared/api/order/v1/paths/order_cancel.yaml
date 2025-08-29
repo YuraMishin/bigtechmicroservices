@@ -1,7 +1,7 @@
 post:
   summary: Отменить заказ по UUID
   description: Отменить заказ по UUID
-  operationId: CancelOrderByUUID
+  operationId: CancelOrder
   tags:
     - Order
   parameters:

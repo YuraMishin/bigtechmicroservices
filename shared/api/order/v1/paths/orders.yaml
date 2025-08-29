@@ -1,7 +1,7 @@
 post:
   summary: Создаёт новый заказ на основе выбранных пользователем деталей
   description: Создаёт новый заказ на основе выбранных пользователем деталей
-  operationId: CreateNewOrder
+  operationId: CreateOrder
   tags:
     - Order
   requestBody:
