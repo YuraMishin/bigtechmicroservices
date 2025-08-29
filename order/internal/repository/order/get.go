@@ -18,5 +18,5 @@ func (r *repository) GetOrder(_ context.Context, orderUUID uuid.UUID) (model.Ord
 		return model.Order{}, model.ErrOrderNotFound
 	}
 
-	return repoConverter.ToModel(order), nil
+	return repoConverter.ToModelOrder(order), nil
 }

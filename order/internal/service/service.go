@@ -12,6 +12,6 @@ import (
 type OrderService interface {
 	GetOrder(ctx context.Context, orderUUID uuid.UUID) (model.Order, error)
 	CancelOrder(ctx context.Context, orderUUID uuid.UUID) (orderV1.CancelOrderRes, error)
-	CreateOrder(ctx context.Context, req *orderV1.CreateOrderRequest) (orderV1.CreateOrderRes, error)
-	PayOrder(ctx context.Context, orderUUID uuid.UUID, req *orderV1.PayOrderRequest) (orderV1.PayOrderRes, error)
+	CreateOrder(ctx context.Context, order model.Order) (model.Order, error)
+	PayOrder(ctx context.Context, paymentRequest model.PaymentRequest) (model.PaymentResult, error)
 }

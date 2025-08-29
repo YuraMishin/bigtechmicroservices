@@ -1,8 +1,7 @@
 package part
 
 import (
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+	"errors"
 
 	"github.com/YuraMishin/bigtechmicroservices/inventory/internal/repository"
 	def "github.com/YuraMishin/bigtechmicroservices/inventory/internal/service"
@@ -16,7 +15,7 @@ type service struct {
 
 func NewService(inventoryRepository repository.PartRepository) (*service, error) {
 	if inventoryRepository == nil {
-		return nil, status.Errorf(codes.Internal, "internal error")
+		return nil, errors.New("inventoryRepository is nil")
 	}
 
 	return &service{

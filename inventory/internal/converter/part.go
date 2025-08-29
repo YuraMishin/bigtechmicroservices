@@ -4,7 +4,6 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/YuraMishin/bigtechmicroservices/inventory/internal/model"
-	repoModel "github.com/YuraMishin/bigtechmicroservices/inventory/internal/repository/model"
 	partV1 "github.com/YuraMishin/bigtechmicroservices/shared/pkg/proto/inventory/v1"
 )
 
@@ -66,24 +65,6 @@ func ToProtoPartList(parts []model.Part) []*partV1.Part {
 		protoParts[idx] = ToProtoPart(part)
 	}
 	return protoParts
-}
-
-func ToRepoPartsFilter(partsFilter model.PartsFilter) repoModel.PartsFilter {
-	return repoModel.PartsFilter{
-		UUIDs:                 partsFilter.UUIDs,
-		Names:                 partsFilter.Names,
-		Categories:            ToRepoCategories(partsFilter.Categories),
-		ManufacturerCountries: partsFilter.ManufacturerCountries,
-		Tags:                  partsFilter.Tags,
-	}
-}
-
-func ToRepoCategories(categories []model.Category) []repoModel.Category {
-	repoCategories := make([]repoModel.Category, len(categories))
-	for i, category := range categories {
-		repoCategories[i] = repoModel.Category(category)
-	}
-	return repoCategories
 }
 
 func ToModelPartsFilter(partsFilter *partV1.PartsFilter) model.PartsFilter {

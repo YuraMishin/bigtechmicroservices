@@ -19,11 +19,10 @@ func (s *ServiceSuite) TestPayOrder_Success() {
 	trx := uuid.New()
 	s.paymentClient.EXPECT().PayOrder(mock.Anything, id.String(), user.String(), model.PaymentMethodCard.String()).Return(model.PaymentResult{TransactionUUID: trx}, nil)
 	s.orderRepository.EXPECT().UpdateOrder(mock.Anything, mock.Anything).Return(nil)
-	res, err := s.service.PayOrder(context.Background(), id, &orderV1.PayOrderRequest{PaymentMethod: orderV1.PayOrderRequestPaymentMethodPAYMENTMETHODCARD})
+
+	res, err := s.service.PayOrder(context.Background(), model.PaymentRequest{OrderUUID: id, PaymentMethod: model.PaymentMethodCard})
 	require.NoError(s.T(), err)
-	por, ok := res.(*orderV1.PayOrderResponse)
-	require.True(s.T(), ok)
-	require.Equal(s.T(), trx, por.TransactionUUID)
+	require.Equal(s.T(), trx, res.TransactionUUID)
 }
 
 func (s *ServiceSuite) TestPayOrder_AlreadyPaid() {
@@ -31,7 +30,7 @@ func (s *ServiceSuite) TestPayOrder_AlreadyPaid() {
 	user := uuid.New()
 	ord := model.Order{OrderUUID: id, UserUUID: user, Status: orderV1.OrderDtoStatusPAID}
 	s.orderRepository.EXPECT().GetOrder(mock.Anything, id).Return(ord, nil)
-	res, err := s.service.PayOrder(context.Background(), id, &orderV1.PayOrderRequest{PaymentMethod: orderV1.PayOrderRequestPaymentMethodPAYMENTMETHODCARD})
+	res, err := s.service.PayOrder(context.Background(), model.PaymentRequest{OrderUUID: id, PaymentMethod: model.PaymentMethodCard})
 	require.ErrorIs(s.T(), err, model.ErrOrderAlreadyPaid)
-	require.Nil(s.T(), res)
+	require.Equal(s.T(), model.PaymentResult{}, res)
 }

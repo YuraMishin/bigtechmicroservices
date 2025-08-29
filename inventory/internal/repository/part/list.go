@@ -24,7 +24,7 @@ func (r *repository) ListParts(_ context.Context, filter serviceModel.PartsFilte
 
 	var serviceParts []serviceModel.Part
 	for _, part := range filteredParts {
-		serviceParts = append(serviceParts, repoConverter.ToModel(part))
+		serviceParts = append(serviceParts, repoConverter.ToModelPart(part))
 	}
 
 	return serviceParts, nil

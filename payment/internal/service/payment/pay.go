@@ -6,26 +6,22 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/YuraMishin/bigtechmicroservices/payment/internal/model"
-	paymentV1 "github.com/YuraMishin/bigtechmicroservices/shared/pkg/proto/payment/v1"
 )
 
-func (s *service) PayOrder(ctx context.Context, in *paymentV1.PayOrderRequest) (*paymentV1.PayOrderResponse, error) {
-	switch in.PaymentMethod {
-	case paymentV1.PaymentMethod_PAYMENT_METHOD_UNSPECIFIED:
-		return nil, model.ErrInvalidPaymentMethod
+func (s *service) PayOrder(ctx context.Context, req model.PayOrderRequest) (model.PayOrderResponse, error) {
+	switch req.PaymentMethod {
+	case model.PaymentMethodCard, model.PaymentMethodSBP, model.PaymentMethodCreditCard, model.PaymentMethodInvestorMoney:
 
-	case paymentV1.PaymentMethod_PAYMENT_METHOD_CARD,
-		paymentV1.PaymentMethod_PAYMENT_METHOD_SBP,
-		paymentV1.PaymentMethod_PAYMENT_METHOD_CREDIT_CARD,
-		paymentV1.PaymentMethod_PAYMENT_METHOD_INVESTOR_MONEY:
+	case model.PaymentMethodUnspecified:
+		return model.PayOrderResponse{}, model.ErrInvalidPaymentMethod
 
 	default:
-		return nil, model.ErrUnknownPaymentMethod
+		return model.PayOrderResponse{}, model.ErrUnknownPaymentMethod
 	}
 
-	transactionUUID := uuid.New().String()
+	transactionUUID := uuid.New()
 
-	return &paymentV1.PayOrderResponse{
-		TransactionUuid: transactionUUID,
+	return model.PayOrderResponse{
+		TransactionUUID: transactionUUID,
 	}, nil
 }

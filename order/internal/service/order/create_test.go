@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/YuraMishin/bigtechmicroservices/order/internal/model"
-	orderV1 "github.com/YuraMishin/bigtechmicroservices/shared/pkg/openapi/order/v1"
 )
 
 func (s *ServiceSuite) TestCreateOrder_WithPartUUIDs_Success() {
@@ -18,34 +17,26 @@ func (s *ServiceSuite) TestCreateOrder_WithPartUUIDs_Success() {
 	s.inventoryClient.EXPECT().ListParts(mock.Anything, mock.Anything).Return([]model.Part{p1, p2}, nil)
 	s.orderRepository.EXPECT().CreateOrder(mock.Anything, mock.Anything).Return(model.Order{}, nil)
 
-	req := &orderV1.CreateOrderRequest{
+	req := model.Order{
 		UserUUID:  uuid.New(),
-		PartUuids: []uuid.UUID{uuid.MustParse(p1.UUID), uuid.MustParse(p2.UUID)},
+		PartUUIDs: []uuid.UUID{uuid.MustParse(p1.UUID), uuid.MustParse(p2.UUID)},
 	}
 	res, err := s.service.CreateOrder(context.Background(), req)
 	require.NoError(s.T(), err)
-	_, ok := res.(*orderV1.CreateOrderResponse)
-	require.True(s.T(), ok)
+	require.NotEqual(s.T(), uuid.Nil, res.OrderUUID)
+	require.Greater(s.T(), res.TotalPrice, float32(0))
 }
 
-func (s *ServiceSuite) TestCreateOrder_WithFilter_Success() {
-	p := model.Part{UUID: uuid.New().String(), Price: 5}
-	s.inventoryClient.EXPECT().ListParts(mock.Anything, mock.Anything).Return([]model.Part{p}, nil)
-	s.orderRepository.EXPECT().CreateOrder(mock.Anything, mock.Anything).Return(model.Order{}, nil)
-
-	pf := orderV1.CreateOrderRequestPartsFilter{Uuids: []uuid.UUID{uuid.MustParse(p.UUID)}}
-	req := &orderV1.CreateOrderRequest{UserUUID: uuid.New(), PartsFilter: orderV1.NewOptCreateOrderRequestPartsFilter(pf)}
+func (s *ServiceSuite) TestCreateOrder_EmptyPartUUIDs_Error() {
+	req := model.Order{UserUUID: uuid.New(), PartUUIDs: []uuid.UUID{}}
 	res, err := s.service.CreateOrder(context.Background(), req)
-	require.NoError(s.T(), err)
-	_, ok := res.(*orderV1.CreateOrderResponse)
-	require.True(s.T(), ok)
+	require.ErrorIs(s.T(), err, model.ErrEmptyPartUUIDs)
+	require.Equal(s.T(), model.Order{}, res)
 }
 
-func (s *ServiceSuite) TestCreateOrder_Exclusive_Error() {
-	p := uuid.New()
-	pf := orderV1.CreateOrderRequestPartsFilter{Uuids: []uuid.UUID{p}}
-	req := &orderV1.CreateOrderRequest{UserUUID: uuid.New(), PartUuids: []uuid.UUID{p}, PartsFilter: orderV1.NewOptCreateOrderRequestPartsFilter(pf)}
-	res, err := s.service.CreateOrder(context.Background(), req)
-	require.Error(s.T(), err)
-	require.Nil(s.T(), res)
+func (s *ServiceSuite) TestCreateOrder_PartsNotFound_Error() {
+	s.inventoryClient.EXPECT().ListParts(mock.Anything, mock.Anything).Return([]model.Part{}, nil)
+	req := model.Order{UserUUID: uuid.New(), PartUUIDs: []uuid.UUID{uuid.New()}}
+	_, err := s.service.CreateOrder(context.Background(), req)
+	require.ErrorIs(s.T(), err, model.ErrPartsNotFound)
 }

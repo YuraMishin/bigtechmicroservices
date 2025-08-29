@@ -1,8 +1,7 @@
 package order
 
 import (
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+	"errors"
 
 	"github.com/YuraMishin/bigtechmicroservices/order/internal/client/grpc"
 	"github.com/YuraMishin/bigtechmicroservices/order/internal/repository"
@@ -24,15 +23,15 @@ func NewService(
 	paymentClient grpc.PaymentClient,
 ) (*service, error) {
 	if orderRepository == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "orderRepository is nil")
+		return nil, errors.New("orderRepository is nil")
 	}
 
 	if inventoryClient == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "inventoryClient is nil")
+		return nil, errors.New("inventoryClient is nil")
 	}
 
 	if paymentClient == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "paymentClient is nil")
+		return nil, errors.New("paymentClient is nil")
 	}
 
 	return &service{

@@ -1,16 +1,17 @@
 package model
 
+import "github.com/google/uuid"
+
 type PaymentMethod int
 
 const (
-	PaymentMethodUnspecified PaymentMethod = iota
-	PaymentMethodCard
-	PaymentMethodSBP
-	PaymentMethodCreditCard
-	PaymentMethodInvestorMoney
+	PaymentMethodUnspecified   PaymentMethod = 0
+	PaymentMethodCard          PaymentMethod = 1
+	PaymentMethodSBP           PaymentMethod = 2
+	PaymentMethodCreditCard    PaymentMethod = 3
+	PaymentMethodInvestorMoney PaymentMethod = 4
 )
 
-// String returns the canonical string representation expected by the payment client.
 func (p PaymentMethod) String() string {
 	switch p {
 	case PaymentMethodCard:
@@ -24,4 +25,9 @@ func (p PaymentMethod) String() string {
 	default:
 		return "PAYMENT_METHOD_UNSPECIFIED"
 	}
+}
+
+type PaymentRequest struct {
+	OrderUUID     uuid.UUID
+	PaymentMethod PaymentMethod
 }

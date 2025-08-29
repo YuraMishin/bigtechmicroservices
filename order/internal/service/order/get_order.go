@@ -9,7 +9,7 @@ import (
 )
 
 func (s *service) GetOrder(ctx context.Context, orderUUID uuid.UUID) (model.Order, error) {
-	if _, err := uuid.Parse(orderUUID.String()); err != nil || orderUUID == uuid.Nil {
+	if _, err := uuid.Parse(orderUUID.String()); err != nil {
 		return model.Order{}, model.ErrOrderNotFound
 	}
 

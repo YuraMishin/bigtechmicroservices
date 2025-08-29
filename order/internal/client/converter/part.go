@@ -1,29 +1,27 @@
 package converter
 
 import (
-	"log"
-
 	"github.com/YuraMishin/bigtechmicroservices/order/internal/model"
 	inventoryV1 "github.com/YuraMishin/bigtechmicroservices/shared/pkg/proto/inventory/v1"
 )
 
-func ListToModel(parts []*inventoryV1.Part) []model.Part {
+func ToModelParts(parts []*inventoryV1.Part) []model.Part {
 	partsModel := make([]model.Part, 0, len(parts))
 	for _, part := range parts {
-		partsModel = append(partsModel, ToModel(part))
+		partsModel = append(partsModel, ToModelPart(part))
 	}
 	return partsModel
 }
 
-func ToModel(part *inventoryV1.Part) model.Part {
+func ToModelPart(part *inventoryV1.Part) model.Part {
 	var dimensions *model.Dimensions
 	if part.Dimensions != nil {
-		dims := DimensionsToModel(part.Dimensions)
+		dims := ToModelDimensions(part.Dimensions)
 		dimensions = &dims
 	}
 	var manufacturer *model.Manufacturer
 	if part.Manufacturer != nil {
-		man := ManufacturerToModel(part.Manufacturer)
+		man := ToModelManufacturer(part.Manufacturer)
 		manufacturer = &man
 	}
 	metadata := make(map[string]*model.Value)
@@ -60,7 +58,7 @@ func ToModel(part *inventoryV1.Part) model.Part {
 	}
 }
 
-func DimensionsToModel(dimensions *inventoryV1.Dimensions) model.Dimensions {
+func ToModelDimensions(dimensions *inventoryV1.Dimensions) model.Dimensions {
 	return model.Dimensions{
 		Length: dimensions.Length,
 		Width:  dimensions.Width,
@@ -69,7 +67,7 @@ func DimensionsToModel(dimensions *inventoryV1.Dimensions) model.Dimensions {
 	}
 }
 
-func ManufacturerToModel(manufacturer *inventoryV1.Manufacturer) model.Manufacturer {
+func ToModelManufacturer(manufacturer *inventoryV1.Manufacturer) model.Manufacturer {
 	return model.Manufacturer{
 		Name:    manufacturer.Name,
 		Country: manufacturer.Country,
@@ -77,29 +75,7 @@ func ManufacturerToModel(manufacturer *inventoryV1.Manufacturer) model.Manufactu
 	}
 }
 
-func MetadataToModel(metadata map[string]*inventoryV1.Value) map[string]any {
-	partsMetadataModel := make(map[string]any, len(metadata))
-	for key, value := range metadata {
-		if value == nil || value.Kind == nil {
-			continue
-		}
-		switch v := value.Kind.(type) {
-		case *inventoryV1.Value_StringValue:
-			partsMetadataModel[key] = v.StringValue
-		case *inventoryV1.Value_Int64Value:
-			partsMetadataModel[key] = v.Int64Value
-		case *inventoryV1.Value_DoubleValue:
-			partsMetadataModel[key] = v.DoubleValue
-		case *inventoryV1.Value_BoolValue:
-			partsMetadataModel[key] = v.BoolValue
-		default:
-			log.Printf("⚠️ unknown metadata kind for key %q: %T", key, v)
-		}
-	}
-	return partsMetadataModel
-}
-
-func FilterToProto(filter model.PartsFilter) *inventoryV1.PartsFilter {
+func ToProtoPartsFilter(filter model.PartsFilter) *inventoryV1.PartsFilter {
 	categories := make([]inventoryV1.Category, 0, len(filter.Categories))
 	for _, category := range filter.Categories {
 		categories = append(categories, inventoryV1.Category(category))

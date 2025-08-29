@@ -11,7 +11,7 @@ func (r *repository) CreateOrder(ctx context.Context, model model.Order) (model.
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	order := converter.ToOrder(model)
+	order := converter.ToRepoOrder(model)
 	r.data[order.OrderUUID.String()] = order
 
 	return model, nil

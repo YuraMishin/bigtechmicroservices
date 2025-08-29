@@ -5,7 +5,7 @@ package mocks
 import (
 	context "context"
 
-	payment_v1 "github.com/YuraMishin/bigtechmicroservices/shared/pkg/proto/payment/v1"
+	model "github.com/YuraMishin/bigtechmicroservices/payment/internal/model"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -22,29 +22,27 @@ func (_m *PaymentService) EXPECT() *PaymentService_Expecter {
 	return &PaymentService_Expecter{mock: &_m.Mock}
 }
 
-// PayOrder provides a mock function with given fields: ctx, in
-func (_m *PaymentService) PayOrder(ctx context.Context, in *payment_v1.PayOrderRequest) (*payment_v1.PayOrderResponse, error) {
-	ret := _m.Called(ctx, in)
+// PayOrder provides a mock function with given fields: ctx, req
+func (_m *PaymentService) PayOrder(ctx context.Context, req model.PayOrderRequest) (model.PayOrderResponse, error) {
+	ret := _m.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for PayOrder")
 	}
 
-	var r0 *payment_v1.PayOrderResponse
+	var r0 model.PayOrderResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *payment_v1.PayOrderRequest) (*payment_v1.PayOrderResponse, error)); ok {
-		return rf(ctx, in)
+	if rf, ok := ret.Get(0).(func(context.Context, model.PayOrderRequest) (model.PayOrderResponse, error)); ok {
+		return rf(ctx, req)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *payment_v1.PayOrderRequest) *payment_v1.PayOrderResponse); ok {
-		r0 = rf(ctx, in)
+	if rf, ok := ret.Get(0).(func(context.Context, model.PayOrderRequest) model.PayOrderResponse); ok {
+		r0 = rf(ctx, req)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*payment_v1.PayOrderResponse)
-		}
+		r0 = ret.Get(0).(model.PayOrderResponse)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *payment_v1.PayOrderRequest) error); ok {
-		r1 = rf(ctx, in)
+	if rf, ok := ret.Get(1).(func(context.Context, model.PayOrderRequest) error); ok {
+		r1 = rf(ctx, req)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -59,24 +57,24 @@ type PaymentService_PayOrder_Call struct {
 
 // PayOrder is a helper method to define mock.On call
 //   - ctx context.Context
-//   - in *payment_v1.PayOrderRequest
-func (_e *PaymentService_Expecter) PayOrder(ctx interface{}, in interface{}) *PaymentService_PayOrder_Call {
-	return &PaymentService_PayOrder_Call{Call: _e.mock.On("PayOrder", ctx, in)}
+//   - req model.PayOrderRequest
+func (_e *PaymentService_Expecter) PayOrder(ctx interface{}, req interface{}) *PaymentService_PayOrder_Call {
+	return &PaymentService_PayOrder_Call{Call: _e.mock.On("PayOrder", ctx, req)}
 }
 
-func (_c *PaymentService_PayOrder_Call) Run(run func(ctx context.Context, in *payment_v1.PayOrderRequest)) *PaymentService_PayOrder_Call {
+func (_c *PaymentService_PayOrder_Call) Run(run func(ctx context.Context, req model.PayOrderRequest)) *PaymentService_PayOrder_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*payment_v1.PayOrderRequest))
+		run(args[0].(context.Context), args[1].(model.PayOrderRequest))
 	})
 	return _c
 }
 
-func (_c *PaymentService_PayOrder_Call) Return(_a0 *payment_v1.PayOrderResponse, _a1 error) *PaymentService_PayOrder_Call {
+func (_c *PaymentService_PayOrder_Call) Return(_a0 model.PayOrderResponse, _a1 error) *PaymentService_PayOrder_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *PaymentService_PayOrder_Call) RunAndReturn(run func(context.Context, *payment_v1.PayOrderRequest) (*payment_v1.PayOrderResponse, error)) *PaymentService_PayOrder_Call {
+func (_c *PaymentService_PayOrder_Call) RunAndReturn(run func(context.Context, model.PayOrderRequest) (model.PayOrderResponse, error)) *PaymentService_PayOrder_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -9,56 +9,27 @@ import (
 	orderV1 "github.com/YuraMishin/bigtechmicroservices/shared/pkg/openapi/order/v1"
 )
 
-func (s *service) CreateOrder(ctx context.Context, req *orderV1.CreateOrderRequest) (orderV1.CreateOrderRes, error) {
-	if req == nil {
-		return nil, model.ErrInvalidRequest
-	}
-	if _, err := uuid.Parse(req.UserUUID.String()); err != nil || req.UserUUID == uuid.Nil {
-		return nil, model.ErrInvalidUserUUID
+func (s *service) CreateOrder(ctx context.Context, order model.Order) (model.Order, error) {
+	if order.UserUUID == uuid.Nil {
+		return model.Order{}, model.ErrInvalidUserUUID
 	}
 
-	var filter model.PartsFilter
-	if len(req.PartUuids) > 0 && req.PartsFilter.IsSet() {
-		return nil, model.ErrMutuallyExclusive
+	if len(order.PartUUIDs) == 0 {
+		return model.Order{}, model.ErrEmptyPartUUIDs
 	}
 
-	hasPartUUIDs := len(req.PartUuids) > 0
-	hasPartsFilter := req.PartsFilter.IsSet()
-
-	switch {
-	case hasPartsFilter:
-		pf := req.PartsFilter.Value
-		uuidStrings := make([]string, 0, len(pf.Uuids))
-		for _, id := range pf.Uuids {
-			uuidStrings = append(uuidStrings, id.String())
-		}
-		categories := make([]model.Category, 0, len(pf.Categories))
-		for _, c := range pf.Categories {
-			categories = append(categories, model.Category(c))
-		}
-		filter = model.PartsFilter{
-			UUIDs:                 uuidStrings,
-			Names:                 append([]string{}, pf.Names...),
-			Categories:            categories,
-			ManufacturerCountries: append([]string{}, pf.ManufacturerCountries...),
-			Tags:                  append([]string{}, pf.Tags...),
-		}
-	case hasPartUUIDs:
-		uuidStrings := make([]string, 0, len(req.PartUuids))
-		for _, id := range req.PartUuids {
-			uuidStrings = append(uuidStrings, id.String())
-		}
-		filter = model.PartsFilter{UUIDs: uuidStrings}
-	default:
-		return nil, model.ErrNoFilterProvided
+	uuidStrings := make([]string, 0, len(order.PartUUIDs))
+	for _, id := range order.PartUUIDs {
+		uuidStrings = append(uuidStrings, id.String())
 	}
+	filter := model.PartsFilter{UUIDs: uuidStrings}
 
 	parts, err := s.inventoryClient.ListParts(ctx, filter)
 	if err != nil {
-		return nil, err
+		return model.Order{}, err
 	}
 	if len(parts) == 0 {
-		return nil, model.ErrPartsNotFound
+		return model.Order{}, model.ErrPartsNotFound
 	}
 
 	var total float64
@@ -70,21 +41,18 @@ func (s *service) CreateOrder(ctx context.Context, req *orderV1.CreateOrderReque
 		}
 	}
 
-	newOrder := model.Order{
+	createdOrder := model.Order{
 		OrderUUID:  uuid.New(),
-		UserUUID:   req.UserUUID,
+		UserUUID:   order.UserUUID,
 		PartUUIDs:  resolvedPartUUIDs,
 		TotalPrice: float32(total),
 		Status:     orderV1.OrderDtoStatusPENDINGPAYMENT,
 	}
 
-	_, err = s.orderRepository.CreateOrder(ctx, newOrder)
+	_, err = s.orderRepository.CreateOrder(ctx, createdOrder)
 	if err != nil {
-		return nil, err
+		return model.Order{}, err
 	}
 
-	return &orderV1.CreateOrderResponse{
-		OrderUUID:  newOrder.OrderUUID,
-		TotalPrice: newOrder.TotalPrice,
-	}, nil
+	return createdOrder, nil
 }

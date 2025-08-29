@@ -1,8 +1,7 @@
 package v1
 
 import (
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+	"errors"
 
 	"github.com/YuraMishin/bigtechmicroservices/inventory/internal/service"
 	inventoryV1 "github.com/YuraMishin/bigtechmicroservices/shared/pkg/proto/inventory/v1"
@@ -15,7 +14,7 @@ type api struct {
 
 func NewAPI(inventoryService service.PartService) (*api, error) {
 	if inventoryService == nil {
-		return nil, status.Errorf(codes.Internal, "internal error")
+		return nil, errors.New("inventoryService is nil")
 	}
 
 	return &api{

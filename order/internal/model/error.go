@@ -13,15 +13,11 @@ var (
 	ErrOrderAlreadyPaid          = errors.New("order already paid")
 	ErrOrderCancelled            = errors.New("order is cancelled")
 	ErrInvalidOrderStatus        = errors.New("invalid order status for payment")
-)
-
-// Validation and request errors for service layer
-var (
-	ErrInvalidRequest    = errors.New("invalid request")
-	ErrInvalidOrderUUID  = errors.New("invalid order uuid")
-	ErrInvalidUserUUID   = errors.New("invalid user uuid")
-	ErrEmptyPartUUIDs    = errors.New("part_uuids is required")
-	ErrNoFilterProvided  = errors.New("either part_uuids or parts_filter must be provided")
-	ErrMutuallyExclusive = errors.New("part_uuids and parts_filter are mutually exclusive")
-	ErrPartsNotFound     = errors.New("no parts found by filter")
+	ErrInvalidRequest            = errors.New("invalid request")
+	ErrInvalidOrderUUID          = errors.New("invalid order uuid")
+	ErrInvalidUserUUID           = errors.New("invalid user uuid")
+	ErrEmptyPartUUIDs            = errors.New("part_uuids is required")
+	ErrNoFilterProvided          = errors.New("either part_uuids or parts_filter must be provided")
+	ErrMutuallyExclusive         = errors.New("part_uuids and parts_filter are mutually exclusive")
+	ErrPartsNotFound             = errors.New("no parts found by filter")
 )

@@ -10,7 +10,7 @@ import (
 )
 
 func (c *client) ListParts(ctx context.Context, filter model.PartsFilter) ([]model.Part, error) {
-	protoFilter := clientConverter.FilterToProto(filter)
+	protoFilter := clientConverter.ToProtoPartsFilter(filter)
 
 	parts, err := c.generatedClient.ListParts(ctx, &generatedInventoryV1.ListPartsRequest{
 		Filter: protoFilter,
@@ -20,5 +20,5 @@ func (c *client) ListParts(ctx context.Context, filter model.PartsFilter) ([]mod
 		return nil, err
 	}
 
-	return clientConverter.ListToModel(parts.Parts), nil
+	return clientConverter.ToModelParts(parts.Parts), nil
 }
