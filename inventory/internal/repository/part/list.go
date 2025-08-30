@@ -1,95 +1,66 @@
-package inventory
+package part
 
 import (
 	"context"
-	"slices"
+
+	"go.mongodb.org/mongo-driver/bson"
 
 	serviceModel "github.com/YuraMishin/bigtechmicroservices/inventory/internal/model"
 	repoConverter "github.com/YuraMishin/bigtechmicroservices/inventory/internal/repository/converter"
 	repoModel "github.com/YuraMishin/bigtechmicroservices/inventory/internal/repository/model"
 )
 
-func (r *repository) ListParts(_ context.Context, filter serviceModel.PartsFilter) ([]serviceModel.Part, error) {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-
+func (r *repository) ListParts(ctx context.Context, filter serviceModel.PartsFilter) ([]serviceModel.Part, error) {
 	repoFilter := repoConverter.ToRepoPartsFilter(filter)
 
-	var filteredParts []repoModel.Part
-	for _, part := range r.data {
-		if r.matchesFilter(part, repoFilter) {
-			filteredParts = append(filteredParts, part)
+	mongoFilter := buildMongoFilter(repoFilter)
+
+	cursor, err := r.collection.Find(ctx, mongoFilter)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if cerr := cursor.Close(ctx); cerr != nil {
+			// Log error but don't return it as the main operation succeeded
+			_ = cerr // explicitly ignore the error
 		}
+	}()
+
+	var repoParts []repoModel.Part
+	if err = cursor.All(ctx, &repoParts); err != nil {
+		return nil, err
 	}
 
 	var serviceParts []serviceModel.Part
-	for _, part := range filteredParts {
+	for _, part := range repoParts {
 		serviceParts = append(serviceParts, repoConverter.ToModelPart(part))
 	}
 
 	return serviceParts, nil
 }
 
-func containsCategory(slice []repoModel.Category, item repoModel.Category) bool {
-	for _, c := range slice {
-		if c == item {
-			return true
-		}
-	}
-	return false
-}
+func buildMongoFilter(filter repoModel.PartsFilter) bson.M {
+	mongoFilter := bson.M{}
 
-func matchesUUIDFilter(part repoModel.Part, uuids []string) bool {
-	if len(uuids) == 0 {
-		return true
-	}
-	return slices.Contains(uuids, part.UUID)
-}
-
-func matchesNameFilter(part repoModel.Part, names []string) bool {
-	if len(names) == 0 {
-		return true
-	}
-	return slices.Contains(names, part.Name)
-}
-
-func matchesCategoryFilter(part repoModel.Part, categories []repoModel.Category) bool {
-	if len(categories) == 0 {
-		return true
-	}
-	return containsCategory(categories, part.Category)
-}
-
-func matchesManufacturerCountryFilter(part repoModel.Part, countries []string) bool {
-	if len(countries) == 0 {
-		return true
+	if len(filter.UUIDs) > 0 {
+		mongoFilter["uuid"] = bson.M{"$in": filter.UUIDs}
 	}
 
-	if part.Manufacturer == nil {
-		return false
+	if len(filter.Names) > 0 {
+		mongoFilter["name"] = bson.M{"$in": filter.Names}
 	}
 
-	return slices.Contains(countries, part.Manufacturer.Country)
-}
-
-func matchesTagsFilter(part repoModel.Part, filterTags []string) bool {
-	if len(filterTags) == 0 {
-		return true
+	if len(filter.Categories) > 0 {
+		mongoFilter["category"] = bson.M{"$in": filter.Categories}
 	}
 
-	for _, filterTag := range filterTags {
-		if slices.Contains(part.Tags, filterTag) {
-			return true
-		}
+	if len(filter.ManufacturerCountries) > 0 {
+		mongoFilter["manufacturer.country"] = bson.M{"$in": filter.ManufacturerCountries}
 	}
 
-	return false
-}
+	if len(filter.Tags) > 0 {
+		mongoFilter["tags"] = bson.M{"$in": filter.Tags}
+	}
 
-func (r *repository) matchesFilter(part repoModel.Part, filter repoModel.PartsFilter) bool {
-	return matchesUUIDFilter(part, filter.UUIDs) &&
-		matchesNameFilter(part, filter.Names) &&
-		matchesCategoryFilter(part, filter.Categories) &&
-		matchesManufacturerCountryFilter(part, filter.ManufacturerCountries) &&
-		matchesTagsFilter(part, filter.Tags)
+	return mongoFilter
 }

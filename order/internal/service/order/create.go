@@ -42,11 +42,13 @@ func (s *service) CreateOrder(ctx context.Context, order model.Order) (model.Ord
 	}
 
 	createdOrder := model.Order{
-		OrderUUID:  uuid.New(),
-		UserUUID:   order.UserUUID,
-		PartUUIDs:  resolvedPartUUIDs,
-		TotalPrice: float32(total),
-		Status:     orderV1.OrderDtoStatusPENDINGPAYMENT,
+		OrderUUID:       uuid.New(),
+		UserUUID:        order.UserUUID,
+		PartUUIDs:       resolvedPartUUIDs,
+		TotalPrice:      float32(total),
+		TransactionUUID: uuid.Nil, // Будет заполнено при оплате
+		PaymentMethod:   orderV1.OrderDtoPaymentMethodPAYMENTMETHODUNSPECIFIED,
+		Status:          orderV1.OrderDtoStatusPENDINGPAYMENT,
 	}
 
 	_, err = s.orderRepository.CreateOrder(ctx, createdOrder)

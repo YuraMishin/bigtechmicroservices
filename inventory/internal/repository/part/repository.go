@@ -1,21 +1,26 @@
-package inventory
+package part
 
 import (
-	"sync"
+	"go.mongodb.org/mongo-driver/mongo"
 
 	def "github.com/YuraMishin/bigtechmicroservices/inventory/internal/repository"
-	repoModel "github.com/YuraMishin/bigtechmicroservices/inventory/internal/repository/model"
 )
 
 var _ def.PartRepository = (*repository)(nil)
 
 type repository struct {
-	mu   sync.RWMutex
-	data map[string]repoModel.Part
+	client     *mongo.Client
+	database   *mongo.Database
+	collection *mongo.Collection
 }
 
-func NewRepository() *repository {
+func NewRepository(client *mongo.Client, databaseName string) *repository {
+	database := client.Database(databaseName)
+	collection := database.Collection("parts")
+
 	return &repository{
-		data: initializeSampleData(),
+		client:     client,
+		database:   database,
+		collection: collection,
 	}
 }
