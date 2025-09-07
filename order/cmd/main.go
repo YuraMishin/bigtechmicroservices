@@ -15,13 +15,17 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/render"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jackc/pgx/v5/stdlib"
+	"github.com/joho/godotenv"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
 	orderV1API "github.com/YuraMishin/bigtechmicroservices/order/internal/api/order/v1"
 	inventoryClientV1 "github.com/YuraMishin/bigtechmicroservices/order/internal/client/grpc/inventory/v1"
 	paymentClientV1 "github.com/YuraMishin/bigtechmicroservices/order/internal/client/grpc/payment/v1"
-	orderRepository "github.com/YuraMishin/bigtechmicroservices/order/internal/repository/order"
+	"github.com/YuraMishin/bigtechmicroservices/order/internal/migrator"
+	"github.com/YuraMishin/bigtechmicroservices/order/internal/repository/order"
 	orderService "github.com/YuraMishin/bigtechmicroservices/order/internal/service/order"
 	orderV1 "github.com/YuraMishin/bigtechmicroservices/shared/pkg/openapi/order/v1"
 	inventoryV1 "github.com/YuraMishin/bigtechmicroservices/shared/pkg/proto/inventory/v1"
@@ -36,7 +40,50 @@ const (
 	shutdownTimeout   = 10 * time.Second
 )
 
+func createDBPool() (*pgxpool.Pool, error) {
+	dbUser := os.Getenv("POSTGRES_USER")
+	dbPassword := os.Getenv("POSTGRES_PASSWORD")
+	dbHost := os.Getenv("POSTGRES_HOST")
+	dbPort := os.Getenv("POSTGRES_PORT")
+	dbName := os.Getenv("POSTGRES_DB")
+	sslMode := os.Getenv("POSTGRES_SSL_MODE")
+
+	if dbUser == "" || dbPassword == "" || dbHost == "" || dbPort == "" || dbName == "" {
+		return nil, fmt.Errorf("one or more required database environment variables (DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME) are not set")
+	}
+	if sslMode == "" {
+		sslMode = "disable"
+	}
+
+	dbURL := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s", dbUser, dbPassword, dbHost, dbPort, dbName, sslMode)
+
+	pool, err := pgxpool.New(context.Background(), dbURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create pgxpool: %w", err)
+	}
+
+	return pool, nil
+}
+
+func runMigrations(pool *pgxpool.Pool) error {
+	migrationsDir := os.Getenv("MIGRATION_DIRECTORY")
+	if migrationsDir == "" {
+		return fmt.Errorf("MIGRATION_DIRECTORY environment variable is not set")
+	}
+
+	migratorRunner := migrator.NewMigrator(stdlib.OpenDB(*pool.Config().ConnConfig), migrationsDir)
+	if err := migratorRunner.Up(); err != nil {
+		return fmt.Errorf("failed to apply migrations: %w", err)
+	}
+
+	return nil
+}
+
 func main() {
+	if err := godotenv.Load(); err != nil {
+		log.Println("No .env file found or failed to load .env, proceeding with environment variables")
+	}
+
 	inventoryConn, err := grpc.NewClient(fmt.Sprintf("localhost:%d", inventoryGrpcPort), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("Failed to connect to InventoryService: %v", err)
@@ -53,7 +100,23 @@ func main() {
 	inventoryClientAdapter := inventoryClientV1.NewClient(inventoryClient)
 	paymentClientAdapter := paymentClientV1.NewClient(paymentClient)
 
-	repo := orderRepository.NewRepository()
+	pool, err := createDBPool()
+	if err != nil {
+		log.Fatalf("failed to create database pool: %v", err)
+	}
+	defer pool.Close()
+
+	if err := runMigrations(pool); err != nil {
+		log.Printf("failed to run migrations: %v", err)
+		return
+	}
+
+	// repo := orderRepository.NewRepository()
+	repo, err := order.NewPostgresRepository(pool)
+	if err != nil {
+		log.Printf("failed to create orderRepository: %v\n", err)
+		return
+	}
 
 	service, err := orderService.NewService(repo, inventoryClientAdapter, paymentClientAdapter)
 	if err != nil {
@@ -70,7 +133,7 @@ func main() {
 	orderServer, err := orderV1.NewServer(api)
 	if err != nil {
 		api.Close()
-		log.Fatalf("ошибка создания сервера OpenAPI: %v", err)
+		log.Printf("ошибка создания сервера OpenAPI: %v", err)
 	}
 	defer api.Close()
 

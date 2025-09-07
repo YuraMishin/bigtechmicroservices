@@ -1,21 +1,25 @@
 package order
 
 import (
-	"sync"
+	"errors"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 
 	def "github.com/YuraMishin/bigtechmicroservices/order/internal/repository"
-	repoModel "github.com/YuraMishin/bigtechmicroservices/order/internal/repository/model"
 )
 
-var _ def.OrderRepository = (*repository)(nil)
+var _ def.OrderRepository = (*postgresRepository)(nil)
 
-type repository struct {
-	mu   sync.RWMutex
-	data map[string]repoModel.Order
+type postgresRepository struct {
+	pool *pgxpool.Pool
 }
 
-func NewRepository() *repository {
-	return &repository{
-		data: make(map[string]repoModel.Order),
+func NewPostgresRepository(pool *pgxpool.Pool) (*postgresRepository, error) {
+	if pool == nil {
+		return nil, errors.New("orderRepository is nil")
 	}
+
+	return &postgresRepository{
+		pool: pool,
+	}, nil
 }
