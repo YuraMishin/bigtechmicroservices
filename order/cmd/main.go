@@ -41,12 +41,12 @@ const (
 )
 
 func createDBPool() (*pgxpool.Pool, error) {
-	dbUser := os.Getenv("DB_USER")
-	dbPassword := os.Getenv("DB_PASSWORD")
-	dbHost := os.Getenv("DB_HOST")
-	dbPort := os.Getenv("DB_PORT")
-	dbName := os.Getenv("DB_NAME")
-	sslMode := os.Getenv("DB_SSLMODE")
+	dbUser := os.Getenv("POSTGRES_USER")
+	dbPassword := os.Getenv("POSTGRES_PASSWORD")
+	dbHost := os.Getenv("POSTGRES_HOST")
+	dbPort := os.Getenv("POSTGRES_PORT")
+	dbName := os.Getenv("POSTGRES_DB")
+	sslMode := os.Getenv("POSTGRES_SSL_MODE")
 
 	if dbUser == "" || dbPassword == "" || dbHost == "" || dbPort == "" || dbName == "" {
 		return nil, fmt.Errorf("one or more required database environment variables (DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME) are not set")
@@ -66,9 +66,9 @@ func createDBPool() (*pgxpool.Pool, error) {
 }
 
 func runMigrations(pool *pgxpool.Pool) error {
-	migrationsDir := os.Getenv("MIGRATIONS_DIR")
+	migrationsDir := os.Getenv("MIGRATION_DIRECTORY")
 	if migrationsDir == "" {
-		return fmt.Errorf("MIGRATIONS_DIR environment variable is not set")
+		return fmt.Errorf("MIGRATION_DIRECTORY environment variable is not set")
 	}
 
 	migratorRunner := migrator.NewMigrator(stdlib.OpenDB(*pool.Config().ConnConfig), migrationsDir)

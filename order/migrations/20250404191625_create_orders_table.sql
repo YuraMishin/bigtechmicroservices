@@ -23,20 +23,7 @@ CREATE TABLE orders (
     status order_status NOT NULL DEFAULT 'PENDING_PAYMENT',
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    cancelled_at TIMESTAMPTZ,
-    
-    CONSTRAINT check_positive_total_price CHECK (total_price > 0),
-    CONSTRAINT check_part_uuids_format CHECK (
-        jsonb_typeof(part_uuids) = 'array'
-    ),
-    CONSTRAINT check_cancelled_at_logic CHECK (
-        (status = 'CANCELLED' AND cancelled_at IS NOT NULL) OR
-        (status != 'CANCELLED' AND cancelled_at IS NULL)
-    ),
-    CONSTRAINT check_transaction_uuid_logic CHECK (
-        (status = 'PAID' AND transaction_uuid IS NOT NULL) OR
-        (status != 'PAID')
-    )
+    cancelled_at TIMESTAMPTZ
 );
 
 COMMENT ON TABLE orders IS 'Таблица заказов';
@@ -52,31 +39,8 @@ COMMENT ON COLUMN orders.updated_at IS 'Дата и время последне�
 COMMENT ON COLUMN orders.cancelled_at IS 'Дата и время отмены заказа (заполняется при отмене)';
 
 CREATE INDEX idx_orders_user_uuid ON orders(user_uuid);
-CREATE INDEX idx_orders_status ON orders(status);
-CREATE INDEX idx_orders_created_at ON orders(created_at);
-CREATE INDEX idx_orders_transaction_uuid ON orders(transaction_uuid) WHERE transaction_uuid IS NOT NULL;
-
-CREATE INDEX idx_orders_part_uuids ON orders USING GIN (part_uuids);
-
-CREATE OR REPLACE FUNCTION update_updated_at_column() RETURNS TRIGGER AS $func$ BEGIN NEW.updated_at = NOW(); RETURN NEW; END; $func$ LANGUAGE plpgsql;
-
-CREATE TRIGGER update_orders_updated_at BEFORE UPDATE ON orders FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
-CREATE OR REPLACE FUNCTION set_cancelled_at() RETURNS TRIGGER AS $func$ BEGIN IF NEW.status = 'CANCELLED' AND OLD.status != 'CANCELLED' THEN NEW.cancelled_at = NOW(); END IF; RETURN NEW; END; $func$ LANGUAGE plpgsql;
-
-CREATE TRIGGER set_orders_cancelled_at BEFORE UPDATE ON orders FOR EACH ROW EXECUTE FUNCTION set_cancelled_at();
 
 -- +goose Down
-DROP TRIGGER IF EXISTS set_orders_cancelled_at ON orders;
-DROP TRIGGER IF EXISTS update_orders_updated_at ON orders;
-
-DROP FUNCTION IF EXISTS set_cancelled_at();
-DROP FUNCTION IF EXISTS update_updated_at_column();
-
-DROP INDEX IF EXISTS idx_orders_part_uuids;
-DROP INDEX IF EXISTS idx_orders_transaction_uuid;
-DROP INDEX IF EXISTS idx_orders_created_at;
-DROP INDEX IF EXISTS idx_orders_status;
 DROP INDEX IF EXISTS idx_orders_user_uuid;
 
 DROP TABLE IF EXISTS orders;

@@ -26,11 +26,11 @@ const (
 )
 
 func getMongoClient() (*mongo.Client, error) {
-	mongoUser := os.Getenv("MONGO_USER")
-	mongoPassword := os.Getenv("MONGO_PASSWORD")
+	mongoUser := os.Getenv("MONGO_INITDB_ROOT_USERNAME")
+	mongoPassword := os.Getenv("MONGO_INITDB_ROOT_PASSWORD")
 	mongoHost := os.Getenv("MONGO_HOST")
 	mongoPort := os.Getenv("MONGO_PORT")
-	mongoDatabase := os.Getenv("MONGO_DATABASE")
+	mongoDatabase := os.Getenv("MONGO_INITDB_DATABASE")
 
 	mongoURI := fmt.Sprintf("mongodb://%s:%s@%s:%s/%s?authSource=admin", mongoUser, mongoPassword, mongoHost, mongoPort, mongoDatabase)
 
@@ -78,7 +78,7 @@ func main() {
 		return
 	}
 
-	repo := mongoRepository.NewRepository(client, os.Getenv("MONGO_DATABASE"))
+	repo := mongoRepository.NewRepository(client, os.Getenv("MONGO_INITDB_DATABASE"))
 
 	if err := repo.InitializeCollection(context.Background()); err != nil {
 		log.Printf("failed to initialize collection: %v\n", err)
