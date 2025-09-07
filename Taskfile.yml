@@ -10,13 +10,11 @@ vars:
   BUF_VERSION: '1.53.0'
   PROTOC_GEN_GO_VERSION: 'v1.36.6'
   PROTOC_GEN_GO_GRPC_VERSION: 'v1.5.1'
-  PROTOC_GEN_GRPC_GATEWAY_VERSION: 'v2.26.3'
-  PROTOC_GEN_VALIDATE_VERSION: 'v1.2.1'
-  PROTOC_GEN_OPENAPIV2_VERSION: 'v2.26.3'
   OGEN_VERSION: 'v1.12.0'
   YQ_VERSION: 'v4.45.2'
-  GRPCURL_VERSION: 'v1.9.3'
   MOCKERY_VERSION: 'v2.53.3'
+  GRPCURL_VERSION: 'v1.9.3'
+  ENVSUBST_VERSION: 'v1.4.3'
 
   BIN_DIR: '{{.ROOT_DIR}}/bin'
   GOLANGCI_LINT: '{{.BIN_DIR}}/golangci-lint'
@@ -27,11 +25,10 @@ vars:
   YQ: '{{.BIN_DIR}}/yq'
   PROTOC_GEN_GO: '{{.BIN_DIR}}/protoc-gen-go'
   PROTOC_GEN_GO_GRPC: '{{.BIN_DIR}}/protoc-gen-go-grpc'
-  PROTOC_GEN_GRPC_GATEWAY: '{{.BIN_DIR}}/protoc-gen-grpc-gateway'
-  PROTOC_GEN_VALIDATE: '{{.BIN_DIR}}/protoc-gen-validate'
-  PROTOC_GEN_OPENAPIV2: '{{.BIN_DIR}}/protoc-gen-openapiv2'
-  GRPCURL: '{{.BIN_DIR}}/grpcurl'
   MOCKERY: "{{.BIN_DIR}}/mockery"
+  GRPCURL: '{{.BIN_DIR}}/grpcurl'
+  ENVSUBST: '{{.BIN_DIR}}/envsubst'
+  ENVDIR: '{{.ROOT_DIR}}/deploy/env'
 
   NODE_MODULES_DIR: '{{.ROOT_DIR}}/node_modules/.bin'
   REDOCLY: '{{.NODE_MODULES_DIR}}/redocly'
@@ -42,8 +39,11 @@ vars:
   OPEN_API_FILES: '{{.ROOT_DIR}}/shared/api/bundles'
   COVERAGE_DIR: '{{.ROOT_DIR}}/coverage'
   COVERAGE_FILE: total.out
+  ORDER_MIGRATIONS_DIR: './order/migrations'
+  POSTGRES_DSN: 'postgres://order-service-user:order-service-password@localhost:5432/order-service?sslmode=disable'
 
-  MODULES: inventory order payment
+  MODULES: inventory order payment platform
+  SERVICES: inventory,order,payment
 
 tasks:
   install-formatters:
@@ -60,10 +60,12 @@ tasks:
         [ -f {{.GOFUMPT}} ] || {
           echo '📦 Устанавливаем gofumpt {{.GOFUMPT_VERSION}}...'
           GOBIN={{.BIN_DIR}} go install mvdan.cc/gofumpt@{{.GOFUMPT_VERSION}}
+          chmod +x {{.GOFUMPT}}
         }
         [ -f {{.GCI}} ] || {
           echo '📦 Устанавливаем gci {{.GCI_VERSION}}...'
           GOBIN={{.BIN_DIR}} go install github.com/daixiang0/gci@{{.GCI_VERSION}}
+          chmod +x {{.GCI}}
         }
     status:
       - test -x {{.GOFUMPT}}
@@ -99,6 +101,7 @@ tasks:
           fi
         done
 
+
   install-golangci-lint:
     desc: "Устанавливает golangci-lint в каталог bin"
     summary: |
@@ -112,6 +115,7 @@ tasks:
           mkdir -p {{.BIN_DIR}}
           echo "📦 Устанавливаем golangci-lint {{.GOLANGCI_LINT_VERSION}}..."
           GOBIN={{.BIN_DIR}} go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@{{.GOLANGCI_LINT_VERSION}}
+          chmod +x {{.GOLANGCI_LINT}}
         }
     status:
       - test -x {{.GOLANGCI_LINT}}
@@ -134,10 +138,10 @@ tasks:
       - |
         set -e
         ERR=0
-        echo "🔍 Линтим все модули ..."        
+        echo "🔍 Линтим все модули ..."
         for mod in {{.MODULES}}; do
           if [ -d "$mod" ]; then
-            echo "🔍 Линтим $mod module"              
+            echo "🔍 Линтим $mod module"
             {{.GOLANGCI_LINT}} run $mod/... --config=.golangci.yml || ERR=1
           fi
         done
@@ -169,37 +173,16 @@ tasks:
           echo '📦 Installing protoc-gen-go-grpc...'
           GOBIN={{.BIN_DIR}} go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@{{.PROTOC_GEN_GO_GRPC_VERSION}}
         }
-        [ -f {{.PROTOC_GEN_GRPC_GATEWAY}} ] || {
-          echo '📦 Installing protoc-gen-grpc-gateway...'
-          GOBIN={{.BIN_DIR}} go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@{{.PROTOC_GEN_GRPC_GATEWAY_VERSION}}
-        }
-        [ -f {{.PROTOC_GEN_VALIDATE}} ] || {
-          echo '📦 Installing protoc-gen-validate...'
-          GOBIN={{.BIN_DIR}} go install github.com/envoyproxy/protoc-gen-validate@{{.PROTOC_GEN_VALIDATE_VERSION}}
-        }
-        [ -f {{.PROTOC_GEN_OPENAPIV2}} ] || {
-          echo '📦 Installing protoc-gen-openapiv2...'
-          GOBIN={{.BIN_DIR}} go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@{{.PROTOC_GEN_OPENAPIV2_VERSION}}
-        }
 
   proto:gen:
-    deps: [ install-buf, proto:install-plugins, proto:update-deps, proto:lint ]
+    deps: [ install-buf, proto:install-plugins, proto:lint ]
     desc: Генерация Go-кода из .proto
     dir: shared/proto
     cmds:
-      - '{{.BUF}} generate --path=inventory --path=payment'
-
-  proto:update-deps:
-    deps: [ install-buf ]
-    desc: Обновляет зависимости protobuf из удаленных репозиториев (googleapis и т.д.)
-    dir: proto
-    cmds:
-      - |
-        echo "🔄 Обновляем зависимости buf..."
-        {{.BUF}} dep update
+      - '{{.BUF}} generate'
 
   proto:lint:
-    deps: [ install-buf, proto:install-plugins, proto:update-deps ]
+    deps: [ install-buf, proto:install-plugins ]
     desc: Проверка .proto-файлов на соответствие стилю
     dir: shared/proto
     cmds:
@@ -379,17 +362,89 @@ tasks:
     summary: |
       Запускает юнит-тесты для указанных модулей проекта.
       Можно указать конкретные модули через переменную MODULES.
+      Исключаются интеграционные тесты в директориях integration и tests/integration.
+      Также исключаются тесты с тегом "integration".
     cmds:
       - |
         ERR=0
         for mod in {{.MODULES}}; do
           if [ -d "$mod" ]; then
-            echo "🧪 Тестируем модуль $mod"
-            go test -v ./$mod/... || ERR=1
+            echo "🧪 Тестируем модуль $mod (только юнит-тесты)"
+            go test -v -tags="!integration" $(go list ./$mod/... | grep -v -E '(/integration|/tests/integration|/integrationtests)') || ERR=1
           fi
         done
         exit $ERR
 
+  inventory-up:
+    desc: "Запуск inventory service"
+    cmds:
+      - go run ./inventory/cmd/main.go
+
+  payment-up:
+    desc: "Запуск payment service"
+    cmds:
+      - go run ./payment/cmd/main.go
+
+  order-up:
+    desc: "Запуск order service"
+    cmds:
+      - go run ./order/cmd/main.go
+
+  up-core:
+    desc: Поднять core контейнеры
+    dir: deploy/compose/core
+    cmds:
+      - echo "[task] 🚀 Поднимаем core контейнеры"
+      - docker compose up --build --detach
+
+  down-core:
+    desc: Остановить и удалить core контейнеры
+    dir: deploy/compose/core
+    cmds:
+      - echo "[task] 🛑 Останавливаем core контейнеры"
+      - docker compose down --volumes
+
+  up-inventory:
+    desc: Поднять Inventory сервис и все его зависимости
+    dir: deploy/compose/inventory
+    cmds:
+      - echo "[task] 📦 Поднимаем Inventory с зависимостями"
+      - docker compose up --build --detach
+
+  down-inventory:
+    desc: Остановить и удалить Inventory сервис и все его зависимости
+    dir: deploy/compose/inventory
+    cmds:
+      - echo "[task] 🛑 Останавливаем Inventory с зависимостями"
+      - docker compose down --volumes
+
+  up-order:
+    desc: Поднять Order сервис и все его зависимости
+    dir: deploy/compose/order
+    cmds:
+      - echo "[task] 📦 Поднимаем Order с зависимостями"
+      - docker compose up --build --detach
+
+  down-order:
+    desc: Остановить и удалить Order сервис и все его зависимости
+    dir: deploy/compose/order
+    cmds:
+      - echo "[task] 🛑 Останавливаем Order с зависимостями"
+      - docker compose down --volumes
+
+  up-all:
+    desc: Поднять все сервисы по очереди вместе с зависимостями
+    cmds:
+      - task up-core
+      - task up-inventory
+      - task up-order
+
+  down-all:
+    desc: Остановить и удалить все сервисы по очереди вместе с зависимостями
+    cmds:
+      - task down-core
+      - task down-inventory
+      - task down-order
 
   grpcurl:install:
     desc: "Устанавливает grpcurl в каталог bin"
@@ -398,6 +453,7 @@ tasks:
         [ -f {{.GRPCURL}} ] || {
           echo '📦 Устанавливаем grpcurl {{.GRPCURL_VERSION}}...'
           GOBIN={{.BIN_DIR}} go install github.com/fullstorydev/grpcurl/cmd/grpcurl@{{.GRPCURL_VERSION}}
+          chmod +x {{.GRPCURL}}
         }
     status:
       - test -x {{.GRPCURL}}
@@ -437,7 +493,7 @@ tasks:
           exit 1
         fi
 
-        # Извлекаем имя детали
+        # Извлекаем имя детали 
         PART_NAME=$(echo $PART_RESPONSE | grep -o '"name": "[^"]*' | cut -d'"' -f4)
         if [ -z "$PART_NAME" ]; then
           echo "❌ Не удалось извлечь имя детали из ответа."
@@ -579,7 +635,7 @@ tasks:
         curl -s -X POST "http://localhost:8080/api/v1/orders/$ORDER2_UUID/cancel"
 
         echo "Проверяем статус после отмены..."
-
+        
         ORDER2_INFO=$(curl -s -X GET "http://localhost:8080/api/v1/orders/$ORDER2_UUID")
         ORDER2_STATUS=$(echo $ORDER2_INFO | grep -o '"status":"[^"]*' | cut -d'"' -f4)
         if [ -z "$ORDER2_STATUS" ]; then
@@ -595,88 +651,66 @@ tasks:
 
         echo
         echo "🎉 Все тесты API успешно выполнены!"
+
+  env:install-envsubst:
+    desc: "Устанавливает envsubst в bin/"
+    cmds:
+      - |
+        [ -f {{.ENVSUBST}} ] || {
+          echo "📦 Устанавливаем envsubst версии {{.ENVSUBST_VERSION}}..."
+          GOBIN={{.BIN_DIR}} go install github.com/a8m/envsubst/cmd/envsubst@{{.ENVSUBST_VERSION}}
+        }
+        echo "✅ envsubst установлен: {{.ENVSUBST}}"
+
+  env:generate:
+    desc: "Генерирует .env файлы для всех сервисов из шаблонов и единого файла конфигурации"
+    deps: [ env:install-envsubst ]
+    cmds:
+      - |
+        ENV_FILE="{{.ENVDIR}}/.env"
+        TEMPLATE_FILE="{{.ENVDIR}}/.env.template"
+        SCRIPT="{{.ENVDIR}}/generate-env.sh"
         
+        if [ ! -f "$ENV_FILE" ]; then
+          if [ -f "$TEMPLATE_FILE" ]; then
+            echo "🔄 Файл $ENV_FILE не найден, создаем из шаблона $TEMPLATE_FILE"
+            cp "$TEMPLATE_FILE" "$ENV_FILE"
+            echo "✅ Создан файл $ENV_FILE. Проверьте и отредактируйте значения переменных при необходимости."
+          else
+            echo "❌ Шаблон $TEMPLATE_FILE не найден!"
+            exit 1
+          fi
+        fi
         
-
-  install-all:
-    desc: "Генерация всех proto и OpenAPI деклараций"
+        chmod +x "$SCRIPT"
+        # Передаем список сервисов в виде строки с разделителями-запятыми
+        export SERVICES="{{.SERVICES}}"
+        export ENV_SUBST="{{.ENVSUBST}}"
+        "$SCRIPT"
+      
+  test-integration:
+    desc: "Запускает интеграционные тесты для указанных модулей"
+    summary: |
+      Запускает интеграционные тесты для модулей, указанных через переменную MODULES.
+      Использует тег "integration" для идентификации интеграционных тестов.
     cmds:
-      - task: install-formatters
-      - task: install-golangci-lint
-      - task: install-buf
-      - task: proto:install-plugins
-      - task: redocly-cli:install
-      - task: ogen:install
-      - task: yq:install
-      - task: grpcurl:install
-
-  inventory-up:
-    desc: "Запуск inventory service"
-    cmds:
-      - go run ./inventory/cmd/main.go
-
-  payment-up:
-    desc: "Запуск payment service"
-    cmds:
-      - go run ./payment/cmd/main.go
-
-  order-up:
-    desc: "Запуск order service"
-    cmds:
-      - go run ./order/cmd/main.go
-
-  up-core:
-    desc: Поднять core контейнеры
-    dir: deploy/compose/core
-    cmds:
-      - echo "[task] 🚀 Поднимаем core контейнеры"
-      - docker compose up --build --detach
-
-  down-core:
-    desc: Остановить и удалить core контейнеры
-    dir: deploy/compose/core
-    cmds:
-      - echo "[task] 🛑 Останавливаем core контейнеры"
-      - docker compose down --volumes
-
-  up-inventory:
-    desc: Поднять Inventory сервис и все его зависимости
-    dir: deploy/compose/inventory
-    cmds:
-      - echo "[task] 📦 Поднимаем Inventory с зависимостями"
-      - docker compose up --build --detach
-
-  down-inventory:
-    desc: Остановить и удалить Inventory сервис и все его зависимости
-    dir: deploy/compose/inventory
-    cmds:
-      - echo "[task] 🛑 Останавливаем Inventory с зависимостями"
-      - docker compose down --volumes
-
-  up-order:
-    desc: Поднять Order сервис и все его зависимости
-    dir: deploy/compose/order
-    cmds:
-      - echo "[task] 📦 Поднимаем Order с зависимостями"
-      - docker compose up --build --detach
-
-  down-order:
-    desc: Остановить и удалить Order сервис и все его зависимости
-    dir: deploy/compose/order
-    cmds:
-      - echo "[task] 🛑 Останавливаем Order с зависимостями"
-      - docker compose down --volumes
-
-  up-all:
-    desc: Поднять все сервисы по очереди вместе с зависимостями
-    cmds:
-      - task up-core
-      - task up-inventory
-      - task up-order
-
-  down-all:
-    desc: Остановить и удалить все сервисы по очереди вместе с зависимостями
-    cmds:
-      - task down-core
-      - task down-inventory
-      - task down-order
+      - |
+        ERR=0
+        echo "🚀 Запуск интеграционных тестов (по тегу integration) для модулей: {{.MODULES}}"
+        for mod in {{.MODULES}}; do
+          if [ -d "$mod" ]; then
+            echo "🧪 Проверка модуля $mod на наличие интеграционных тестов"
+            
+            # Проверяем наличие файлов с тегом integration
+            HAS_TESTS=$(grep -r "//go:build integration" $mod --include="*.go" | wc -l)
+            
+            if [ "$HAS_TESTS" -eq 0 ]; then
+              echo "⚠️ Модуль $mod не содержит интеграционных тестов (с тегом integration), пропускаем"
+              continue
+            fi
+            
+            echo "▶️ Запуск интеграционных тестов для $mod"
+            go test -v -tags=integration ./$mod/... || ERR=1
+          fi
+        done
+        exit $ERR
